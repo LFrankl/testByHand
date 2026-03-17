@@ -855,6 +855,227 @@
         </div>
       </div>
 
+      <!-- P6 毒药与老鼠 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">6</span>
+          <span class="puzzle-title">毒药与老鼠 — 二进制编码</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>1000 瓶药水，其中 1 瓶是毒药，毒发时间恰好 <strong>1 小时</strong>。老鼠喝到毒药 1 小时后死亡，每只老鼠可以同时喝多瓶（混合）。问：最少需要几只老鼠，才能在 <strong>1 小时内</strong>确定哪瓶是毒药？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>用<strong>二进制编码</strong>：将 1000 瓶药水编号 0–999，转为二进制最多需要 10 位（2¹⁰ = 1024 &gt; 1000）。</p>
+            <ul style="margin-top:8px">
+              <li>第 i 只老鼠（i = 0–9）喝所有编号中<strong>第 i 位为 1</strong> 的瓶子</li>
+              <li>1 小时后，将死亡老鼠的编号（1=死，0=活）从高到低排列，得到的二进制数即为毒药编号</li>
+            </ul>
+            <p style="margin-top:8px">例：若老鼠 0、2、3 死亡，则毒药编号 = 0b1101 = 13。</p>
+          </div>
+          <div class="puzzle-answer">答案：10 只老鼠</div>
+          <div class="puzzle-insight" style="margin-top:10px">此方案只能确定 1 瓶毒药，且只有 1 轮测试机会（1 小时内得出结论）。核心思想：让每只老鼠代表一个二进制位，存活/死亡编码出毒药编号。</div>
+        </div>
+      </div>
+
+      <!-- P7 赛马找前三 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">7</span>
+          <span class="puzzle-title">赛马找前三 — 最优赛程安排</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>25 匹马，5 条赛道，每次只能同时跑 5 匹，没有计时器（只能比较名次，不能记录时间）。<strong>最少几次比赛</strong>找出速度最快的前 3 名？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>轮次</th><th>内容</th><th>目的</th></tr>
+              <tr><td>第 1–5 次</td><td>分 5 组各跑一次</td><td>每组排出名次</td></tr>
+              <tr><td>第 6 次</td><td>5 组组内第 1 名同场竞技</td><td>确定<strong>第 1 名</strong></td></tr>
+            </table>
+            <p style="margin-top:10px">第 6 次之后，第 1 名已确定。还需在以下 5 匹中找第 2、3 名：</p>
+            <ul>
+              <li>第 6 次第 1 名那组的 <strong>2、3 名</strong></li>
+              <li>第 6 次第 2 名那组的 <strong>1、2 名</strong></li>
+              <li>第 6 次第 3 名那组的 <strong>1 名</strong></li>
+            </ul>
+            <p>共 5 匹，<strong>第 7 次</strong>跑一场，取前 2 即为全场第 2、3 名。</p>
+          </div>
+          <div class="puzzle-answer">答案：7 次</div>
+          <div class="puzzle-insight" style="margin-top:10px">不能少于 7 次——第 6 次后至少还有 5 个候选，必须再跑一次。第 6 次的倒数两组（第 4、5 名组）的所有马都不可能进前 3，直接淘汰。</div>
+        </div>
+      </div>
+
+      <!-- P8 绳子烧计时 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">8</span>
+          <span class="puzzle-title">绳子烧计时 — 量出 45 分钟</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>两根绳子，每根烧完恰好 <strong>1 小时</strong>，但绳子粗细不均匀，<strong>不能折算长度</strong>来计时。只能点火，不能切割，如何准确计量 <strong>45 分钟</strong>？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>不能用长度，但可以利用"两头同时点燃"让时间减半。</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>时刻</th><th>操作</th><th>剩余时间</th></tr>
+              <tr><td>0 min</td><td>绳 A <strong>两头</strong>同时点燃；绳 B <strong>一头</strong>点燃</td><td>A 剩 30 min，B 剩 60 min</td></tr>
+              <tr><td>30 min</td><td>绳 A 烧完；此时点燃绳 B 的<strong>另一头</strong></td><td>B 剩 15 min</td></tr>
+              <tr><td>45 min</td><td>绳 B 烧完</td><td>✓</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：45 分钟</div>
+          <div class="puzzle-insight" style="margin-top:10px">拓展：用同样方法可以测 15 min（只烧绳 B 两头）、75 min（先全程烧绳 A，再烧绳 B 两头）。核心技巧：两头点燃 = 时间减半。</div>
+        </div>
+      </div>
+
+      <!-- P9 摸珠子博弈 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">9</span>
+          <span class="puzzle-title">摸珠子博弈 — 先手必胜策略</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>桌上有 <strong>100 颗珠子</strong>，两人轮流取，每次可取 <strong>1–5 颗</strong>，取走最后一颗的人<strong>获胜</strong>。先手有必胜策略吗？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>关键：每轮两人合计最多取 6 颗（1+5），只要控制<strong>每轮总和为 6</strong>，先手就能主导节奏。</p>
+            <ul style="margin-top:8px">
+              <li>100 ÷ 6 = 16 余 <strong>4</strong></li>
+              <li>先手第一次取 <strong>4 颗</strong>，剩 96 = 16 × 6</li>
+              <li>此后对手取 k 颗，先手取 6−k 颗，维持每轮取走 6 颗</li>
+              <li>经过 16 轮，恰好取完最后一颗</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：先手必胜，第一次取 4 颗，之后每次取 6 减对手取的数</div>
+          <div class="puzzle-insight" style="margin-top:10px">推广：若总数 N 不能被 (1+每次上限) 整除，则先手必胜；否则后手必胜。本题 100 mod 6 = 4 ≠ 0，所以先手必胜。</div>
+        </div>
+      </div>
+
+      <!-- P10 翻硬币 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">10</span>
+          <span class="puzzle-title">翻硬币奇偶性 — 不变量分析</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>100 枚硬币全部<strong>反面朝上</strong>，每次操作翻转其中<strong>连续的 3 枚</strong>。问：能否经过若干次操作让<strong>所有硬币正面朝上</strong>？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>用<strong>奇偶性不变量</strong>分析：每次翻转 3 枚连续硬币。</p>
+            <p style="margin-top:8px">更精确的不变量：将 100 枚硬币编号 1–100，考虑<strong>模 3 的位置分布</strong>。每次翻转连续 3 枚，三枚编号模 3 余数恰好覆盖 {0,1,2} 一次。正面硬币数量按模 3 分类的各组，每次翻转使每类各变化 1，因此三类数量之差的奇偶性是不变量。</p>
+            <p style="margin-top:8px">初始三类均为 0（差为 0），目标正面数 100，三类各为约 33.3（不整除），无法达到。</p>
+          </div>
+          <div class="puzzle-answer">答案：不可能</div>
+          <div class="puzzle-insight" style="margin-top:10px">记忆口诀：翻转类问题先找<strong>不变量</strong>（奇偶、模运算、着色法）。初始状态和目标状态的不变量不同，则目标不可达。</div>
+        </div>
+      </div>
+
+      <!-- P11 罐子取糖 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">11</span>
+          <span class="puzzle-title">罐子取糖最大化 — 极端策略</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>两个罐子，50 颗红糖 + 50 颗蓝糖，你来<strong>分配</strong>糖果放入两个罐子（每颗糖必须放且只放一个罐子）。对手<strong>随机选一个罐子</strong>，再从该罐子中<strong>随机取一颗</strong>。如何分配让取到红糖的概率<strong>最大</strong>？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>直觉：50-50 放，各罐 25 红 25 蓝，概率 = 50%。能做得更好吗？</p>
+            <p style="margin-top:8px"><strong>极端策略</strong>：罐 A 放 <strong>1 颗红糖</strong>，罐 B 放剩余 <strong>49 红 + 50 蓝</strong>。</p>
+            <p style="margin-top:8px">P(红) = ½ × 1/1 + ½ × 49/99 = 0.5 + 0.247 ≈ <strong>74.7%</strong></p>
+            <p style="margin-top:8px">任何其他分法都比这低——罐 A 只要有任何蓝糖就会拉低第一项；把纯红糖单独放一个罐子是最优解。</p>
+          </div>
+          <div class="puzzle-answer">答案：罐 A 放 1 颗红糖，罐 B 放 49 红 + 50 蓝，概率 ≈ 74.7%</div>
+          <div class="puzzle-insight" style="margin-top:10px">反直觉：我们倾向于"均匀分配"，但极端不均匀反而更优。关键是让一个罐子有 100% 确定性，再让另一个罐子尽可能高概率。</div>
+        </div>
+      </div>
+
+      <!-- P12 生日悖论 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">12</span>
+          <span class="puzzle-title">生日悖论 — 23 人超 50%</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>一个房间里至少有多少人，才能使其中<strong>存在两人生日相同</strong>的概率超过 <strong>50%</strong>？（假设生日均匀分布在 365 天）</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>正向计算"至少两人同生日"很复杂，用<strong>补集</strong>：计算所有人生日各不相同的概率。</p>
+            <p style="margin-top:8px">P(所有人不同) = 365/365 × 364/365 × 363/365 × … × (365−n+1)/365</p>
+            <table class="puzzle-table" style="margin-top:10px">
+              <tr><th>人数 n</th><th>P(有相同生日)</th></tr>
+              <tr><td>10</td><td>11.7%</td></tr>
+              <tr><td>20</td><td>41.1%</td></tr>
+              <tr><td>23</td><td><strong>50.7% ✓</strong></td></tr>
+              <tr><td>30</td><td>70.6%</td></tr>
+              <tr><td>50</td><td>97.0%</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：23 人</div>
+          <div class="puzzle-insight" style="margin-top:10px">反直觉原因：我们往往将"和我同生日"与"两人生日相同"混淆。前者需要 183 人才超 50%，后者只要 23 人——因为后者比较的是 C(23,2) = 253 对，而非 23 对。</div>
+        </div>
+      </div>
+
+      <!-- P13 飞机环游 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">13</span>
+          <span class="puzzle-title">飞机环游地球 — 对称接力加油</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>一个机场，若干架相同的飞机，每架油箱满载只能飞地球<strong>周长的 1/4</strong>。飞机之间可以<strong>空中加油</strong>（互相转移燃油）。问：最少需要几架飞机，让<strong>其中一架</strong>完成环球飞行并返回机场？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>设地球周长为 4 单位，每架飞机满油可飞 1 单位，利用<strong>对称性</strong>：前半段和后半段各需一组支援飞机。</p>
+            <p style="margin-top:8px"><strong>前半段支援（向东出发）：</strong></p>
+            <ul>
+              <li>0 处：主机 + 支援 A + 支援 B 全满出发</li>
+              <li>1/8 处：B 给 A 和主机各加 1/8 油后返航（B 自留 1/2 刚好返回）</li>
+              <li>1/4 处：A 给主机加满后返航（A 自留 1/4 刚好返回）；主机满油</li>
+            </ul>
+            <p style="margin-top:8px"><strong>后半段支援（向西迎接）：</strong></p>
+            <ul>
+              <li>支援 C、D 向西出发，分别在 3/4 和 7/8 处为主机补油</li>
+              <li>主机在 1/2 处油量耗尽，由后半段支援撑回</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：最少 3 架飞机（主机 + 2 架支援）；若支援机也须安全返航则需 5 架</div>
+          <div class="puzzle-insight" style="margin-top:10px">核心思路：对称接力加油。前半段送油，后半段迎接补油。不同题目版本（是否要求支援机安全返回）答案略有差异。</div>
+        </div>
+      </div>
+
     </section>
 
     <!-- ══════════════════════════════ 9. sync.Map ══════════════════════════════ -->
