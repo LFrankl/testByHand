@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>forinterview — Go 面试题练习</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:    #F97316;
+      --primary-lt: #FED7AA;
+      --bg:         #FFFFFF;
+      --nav-bg:     #FFFBF5;
+      --code-bg:    #F8F9FA;
+      --text:       #1A1A1A;
+      --text-muted: #6B7280;
+      --border:     #E5E7EB;
+      --nav-w:      240px;
+      --header-h:   56px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    /* ── Header ── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--header-h);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 12px;
+    }
+    header .logo {
+      font-size: 18px; font-weight: 700; color: var(--primary);
+      letter-spacing: -.3px;
+    }
+    header .sep { color: var(--border); font-size: 20px; }
+    header .subtitle { color: var(--text-muted); font-size: 13px; }
+    header .badge {
+      margin-left: auto;
+      background: var(--primary-lt); color: var(--primary);
+      font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      padding-top: var(--header-h);
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    nav {
+      position: fixed;
+      top: var(--header-h); bottom: 0; left: 0;
+      width: var(--nav-w);
+      background: var(--nav-bg);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 20px 0 40px;
+    }
+    nav .nav-label {
+      padding: 0 16px 6px;
+      font-size: 11px; font-weight: 700; letter-spacing: .08em;
+      color: var(--text-muted); text-transform: uppercase;
+    }
+    nav a {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px;
+      text-decoration: none; color: var(--text);
+      font-size: 13.5px; border-radius: 0;
+      transition: background .15s, color .15s;
+      border-left: 3px solid transparent;
+    }
+    nav a:hover {
+      background: var(--primary-lt); color: var(--primary);
+    }
+    nav a.active {
+      background: #FFF7ED;
+      border-left-color: var(--primary);
+      color: var(--primary); font-weight: 600;
+    }
+    nav a .num {
+      font-size: 11px; font-weight: 700;
+      background: var(--border); color: var(--text-muted);
+      width: 18px; height: 18px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Content ── */
+    main {
+      margin-left: var(--nav-w);
+      flex: 1;
+      padding: 40px 48px 80px;
+      max-width: calc(var(--nav-w) + 900px);
+    }
+
+    /* ── Section ── */
+    .topic { margin-bottom: 72px; }
+    .topic + .topic { border-top: 1px solid var(--border); padding-top: 64px; }
+
+    .topic-header { margin-bottom: 24px; }
+    .topic-header h2 {
+      font-size: 24px; font-weight: 700;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .topic-header h2 .tag {
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 4px; background: var(--primary-lt); color: var(--primary);
+      letter-spacing: .04em;
+    }
+    .topic-header p { color: var(--text-muted); margin-top: 6px; font-size: 14px; }
+
+    /* Design card */
+    .design-card {
+      background: #FFFBF5;
+      border: 1px solid var(--primary-lt);
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+    .design-card h3 {
+      font-size: 13px; font-weight: 700; color: var(--primary);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px;
+    }
+    .design-card ul { list-style: none; padding: 0; }
+    .design-card ul li {
+      font-size: 13.5px; color: var(--text);
+      padding: 3px 0; padding-left: 18px; position: relative;
+    }
+    .design-card ul li::before {
+      content: "▸"; position: absolute; left: 0; color: var(--primary);
+    }
+
+    /* File tabs */
+    .file-tabs { margin-bottom: 24px; }
+    .file-tabs-header {
+      display: flex; gap: 0; border-bottom: 2px solid var(--border);
+      margin-bottom: 0;
+    }
+    .file-tab-btn {
+      padding: 8px 16px;
+      font-size: 12.5px; font-weight: 500;
+      border: none; background: none; cursor: pointer;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: color .15s, border-color .15s;
+    }
+    .file-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+    .file-tab-btn:hover { color: var(--text); }
+
+    .file-tab-pane { display: none; }
+    .file-tab-pane.active { display: block; }
+
+    /* Code block */
+    .code-wrap {
+      border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .code-filename {
+      background: #F1F5F9;
+      padding: 6px 14px;
+      font-size: 12px; font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+    }
+    pre {
+      margin: 0 !important;
+      background: var(--code-bg) !important;
+      overflow-x: auto;
+    }
+    pre code.hljs {
+      padding: 16px 20px !important;
+      font-size: 13px !important;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace !important;
+      line-height: 1.6 !important;
+    }
+
+    /* Commentary */
+    .commentary {
+      font-size: 13.5px; line-height: 1.7; color: #374151;
+      background: #F9FAFB; border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px 18px; margin-bottom: 24px;
+    }
+    .commentary strong { color: var(--primary); }
+    .commentary code {
+      background: #E5E7EB; padding: 1px 5px; border-radius: 3px;
+      font-size: 12px; font-family: "SF Mono", "Fira Code", monospace;
+    }
+
+    /* Key points table */
+    .key-points { margin-top: 8px; }
+    .key-points h3 {
+      font-size: 13px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    th {
+      text-align: left; padding: 8px 12px;
+      background: #F1F5F9; color: var(--text-muted);
+      font-weight: 600; font-size: 12px;
+      border: 1px solid var(--border);
+    }
+    td {
+      padding: 8px 12px; border: 1px solid var(--border);
+      vertical-align: top; line-height: 1.5;
+    }
+    tr:hover td { background: #FFFBF5; }
+    td code {
+      background: #E5E7EB; padding: 1px 5px; border-radius: 3px;
+      font-size: 12px; font-family: "SF Mono", "Fira Code", monospace;
+    }
+
+    /* Mobile */
+    .nav-toggle {
+      display: none; background: none; border: none;
+      cursor: pointer; padding: 6px; color: var(--text);
+    }
+    @media (max-width: 768px) {
+      .nav-toggle { display: flex; align-items: center; }
+      nav {
+        transform: translateX(-100%);
+        transition: transform .25s;
+        z-index: 90;
+      }
+      nav.open { transform: translateX(0); }
+      main { margin-left: 0; padding: 24px 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <button class="nav-toggle" onclick="document.querySelector('nav').classList.toggle('open')" aria-label="Toggle menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <span class="logo">forinterview</span>
+  <span class="sep">|</span>
+  <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
+  <span class="badge">7 题</span>
+</header>
+
+<div class="layout">
+  <nav id="sidebar">
+    <div class="nav-label">题目列表</div>
+    <a href="#tcp-protocol"><span class="num">1</span>TCP 自定义协议</a>
+    <a href="#lru"><span class="num">2</span>LRU 缓存</a>
+    <a href="#seckill"><span class="num">3</span>秒杀服务</a>
+    <a href="#webframe"><span class="num">4</span>Web 框架</a>
+    <a href="#workerpool"><span class="num">5</span>工作池</a>
+    <a href="#connpool"><span class="num">6</span>连接池</a>
+    <a href="#ratelimiter"><span class="num">7</span>限流器</a>
+  </nav>
+
+  <main>
+
+    <!-- ══════════════════════════════ 1. TCP ══════════════════════════════ -->
+    <section class="topic" id="tcp-protocol">
+      <div class="topic-header">
+        <h2>TCP 自定义协议 <span class="tag">网络编程</span></h2>
+        <p>在 TCP 之上设计带定长头部的应用层协议，解决粘包 / 拆包问题。</p>
+      </div>
+
+      <div class="design-card">
+        <h3>设计要点</h3>
+        <ul>
+          <li>12 字节定长头部：Magic(2) + Version(1) + Type(1) + Reserved(1) + Seq(4) + BodyLen(4)</li>
+          <li><strong>粘包解决方案</strong>：<code>io.ReadFull</code> 先读固定 12 字节头，再按 <code>BodyLen</code> 精确读 Body，永不多读</li>
+          <li><code>bufio.Reader</code> 包装连接：减少系统调用，批量读取</li>
+          <li>校验 Magic + Version：防止脏数据或版本不兼容</li>
+          <li>大端序（<code>binary.BigEndian</code>）：网络字节序的惯例</li>
+          <li><code>atomic.AddUint32</code> 生成单调递增序列号，支持并发客户端请求匹配</li>
+        </ul>
+      </div>
+
+      <div class="file-tabs">
+        <div class="file-tabs-header">
+          <button class="file-tab-btn active" onclick="switchTab(this,'tcp-main-pane')">main.go</button>
+        </div>
+        <div class="file-tab-pane active" id="tcp-main-pane">
+          <div class="code-wrap">
+            <div class="code-filename">tcp-protocol/answer/main.go</div>
+            <pre><code class="language-go" id="code-tcp-main"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>协议格式</strong>：定长头部是解决 TCP 粘包最简洁的方案。接收方先 <code>io.ReadFull(r, headerBuf)</code> 读满 12 字节，解析出 <code>BodyLen</code>，再 <code>io.ReadFull(r, body)</code> 精确读取，完全不依赖 delimiter。<br><br>
+            <strong>Encode/Decode 对称性</strong>：<code>binary.Write</code> 按大端序把整个 Header struct 写入 buffer，<code>binary.Read</code> 反向还原——字段顺序必须与内存布局完全对齐，否则会解析错位。<br><br>
+            <strong>服务端模型</strong>：Accept loop + <code>go handleConn(conn)</code>，每连接一个 goroutine，<code>bufio.Reader</code> 减少小读的 syscall 次数。<code>processMessage</code> 基于 Type 路由，返回的 Seq 与请求一致，便于多路复用场景下的请求匹配。
+          </div>
+        </div>
+      </div>
+
+      <div class="key-points">
+        <h3>核心考察点</h3>
+        <table>
+          <tr><th>问题</th><th>答案要点</th></tr>
+          <tr><td>TCP 粘包是什么？</td><td>TCP 是流式协议，内核可能把多个 Write 合并或把一个 Write 拆分发送。应用层必须自己定界。</td></tr>
+          <tr><td>有哪些解帧方案？</td><td>① 定长头部含 BodyLen（本题）② 固定分隔符（如 HTTP 的 \r\n）③ 固定长度消息</td></tr>
+          <tr><td>为何用 <code>io.ReadFull</code>？</td><td>普通 <code>Read</code> 可能返回少于请求字节数；<code>ReadFull</code> 循环直到读满或 EOF/error，保证原子性。</td></tr>
+          <tr><td>大端 vs 小端？</td><td>网络协议惯用大端（Network byte order）；x86 CPU 是小端。Go 的 <code>binary.BigEndian</code> 负责转换。</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ 2. LRU ══════════════════════════════ -->
+    <section class="topic" id="lru">
+      <div class="topic-header">
+        <h2>LRU 缓存 <span class="tag">数据结构</span></h2>
+        <p>线程安全的 LRU（最近最少使用）缓存，Get/Put 均 O(1)。</p>
+      </div>
+
+      <div class="design-card">
+        <h3>设计要点</h3>
+        <ul>
+          <li>双向链表 + HashMap：链表维护访问顺序（头=最近，尾=最旧），Map 实现 O(1) 定位节点</li>
+          <li><strong>哨兵节点</strong>：head/tail 永不存数据，消除边界判空，所有链表操作统一无分支</li>
+          <li><code>moveToFront = remove + addToFront</code>：复用两个基础操作，代码最小化</li>
+          <li><code>sync.Mutex</code> 保护整个 cache map 和链表，所有公开方法加锁</li>
+          <li>淘汰时从 <code>tail.prev</code> 摘除，同时 <code>delete(cache, key)</code> 保持 Map 与链表一致</li>
+        </ul>
+      </div>
+
+      <div class="file-tabs">
+        <div class="file-tabs-header">
+          <button class="file-tab-btn active" onclick="switchTab(this,'lru-lru-pane')">lru.go</button>
+        </div>
+        <div class="file-tab-pane active" id="lru-lru-pane">
+          <div class="code-wrap">
+            <div class="code-filename">lru/answer/lru.go</div>
+            <pre><code class="language-go" id="code-lru-lru"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>为何是 O(1)</strong>：Get → Map 查找 O(1) → 链表 remove+addToFront O(1)（直接操作指针，不遍历）。Put → Map 查找/插入 O(1) → 链表操作 O(1)。<br><br>
+            <strong>哨兵节点的价值</strong>：没有哨兵时，插入第一个节点需要判断 head==nil；删除最后节点需要判断 tail==nil。哨兵使得 <code>addToFront</code> 和 <code>removeLast</code> 的代码路径完全统一，减少 bug 表面积。<br><br>
+            <strong>并发安全</strong>：<code>Get</code> 和 <code>Put</code> 都修改链表顺序（Get 也要 moveToFront），因此两者都需要写锁。若读操作比写多得多，可考虑读写分离，但实际上 LRU 的 Get 会修改状态，用 RWMutex 反而复杂化。
+          </div>
+        </div>
+      </div>
+
+      <div class="key-points">
+        <h3>核心考察点</h3>
+        <table>
+          <tr><th>问题</th><th>答案要点</th></tr>
+          <tr><td>为何需要双向链表？</td><td>单向链表删除任意节点需要找前驱节点（O(n)）；双向链表通过 <code>n.prev</code> 直接拿到前驱，O(1) 删除。</td></tr>
+          <tr><td>哨兵节点有什么好处？</td><td>统一边界处理，消除"链表为空时特殊判断"，所有 add/remove 操作代码路径一致。</td></tr>
+          <tr><td>Get 为何也要加写锁？</td><td>Get 后需要 moveToFront（修改链表），所以不能用只读锁。</td></tr>
+          <tr><td>如何支持泛型 key/value？</td><td>Go 1.18+ 可用类型参数 <code>[K comparable, V any]</code> 替换 <code>int</code>。</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ 3. Seckill ══════════════════════════════ -->
+    <section class="topic" id="seckill">
+      <div class="topic-header">
+        <h2>秒杀服务 <span class="tag">并发 · HTTP</span></h2>
+        <p>高并发秒杀核心逻辑 + HTTP 接口，防超卖、防重复购买。</p>
+      </div>
+
+      <div class="design-card">
+        <h3>设计要点</h3>
+        <ul>
+          <li><strong>原子临界区</strong>：查重复 → 查库存 → 扣库存 → 写订单，四步必须在同一把锁内完成，缺一不可</li>
+          <li><code>sold map[int64]bool</code>：O(1) 用户去重，先于库存检查（短路优化）</li>
+          <li><strong>超卖根因</strong>：若"查库存"和"扣库存"分两次加锁，两次锁之间库存可能被他人耗尽</li>
+          <li>HTTP 层用 <code>errors.Is</code> 区分业务错误，统一返回 409 Conflict</li>
+          <li><code>atomic.AddUint64</code> 生成订单序列号，无需额外锁</li>
+        </ul>
+      </div>
+
+      <div class="file-tabs">
+        <div class="file-tabs-header">
+          <button class="file-tab-btn active" onclick="switchTab(this,'sk-seckill-pane')">seckill.go</button>
+          <button class="file-tab-btn" onclick="switchTab(this,'sk-handler-pane')">handler.go</button>
+        </div>
+        <div class="file-tab-pane active" id="sk-seckill-pane">
+          <div class="code-wrap">
+            <div class="code-filename">seckill/answer/seckill.go</div>
+            <pre><code class="language-go" id="code-sk-seckill"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>超卖的产生与防止</strong>：假设库存剩 1，两个 goroutine 同时进入。若分两步加锁：两者都读到 stock=1，都通过检查，先后扣减变成 -1。本实现将"读+写"置于同一把锁，第二个 goroutine 进入时 stock 已为 0，直接返回 ErrOutOfStock。<br><br>
+            <strong>操作顺序</strong>：先查 sold（去重）再查库存。因为重复购买在高并发下更常见，早返回节省 CPU；若反过来，用户 A 秒杀成功后再次请求，需要等到库存检查后才能去重，逻辑无误但略低效。
+          </div>
+        </div>
+        <div class="file-tab-pane" id="sk-handler-pane">
+          <div class="code-wrap">
+            <div class="code-filename">seckill/answer/handler.go</div>
+            <pre><code class="language-go" id="code-sk-handler"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>HTTP 设计</strong>：<code>Handler</code> 实现 <code>http.Handler</code> 接口而非注册全局路由，便于测试（直接 <code>httptest.NewServer(handler)</code>）。<br><br>
+            <strong>状态码语义</strong>：409 Conflict 表示"请求与当前服务器状态冲突"，比 400 Bad Request 更准确地描述超卖/重购的语义。<code>errors.Is</code> 保证 wrap 后的错误也能正确匹配。
+          </div>
+        </div>
+      </div>
+
+      <div class="key-points">
+        <h3>核心考察点</h3>
+        <table>
+          <tr><th>问题</th><th>答案要点</th></tr>
+          <tr><td>什么是超卖？如何防止？</td><td>多个并发请求都通过库存检查但库存不足时发生。防止方法：在同一把锁内完成检查+扣减，或用数据库原子 UPDATE + 行锁。</td></tr>
+          <tr><td>为何不用 <code>atomic</code> 替代 <code>Mutex</code>？</td><td>需要同时保护三个字段（stock、sold、orders）的一致性，<code>atomic</code> 只能保护单个变量，无法保证组合操作的原子性。</td></tr>
+          <tr><td>生产环境如何扩展？</td><td>Redis DECR 原子扣减库存（分布式）+ Kafka 异步落单，避免 DB 热点。Lua 脚本保证 Redis 上的 check-and-decrement 原子性。</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ 4. Web Framework ══════════════════════════════ -->
+    <section class="topic" id="webframe">
+      <div class="topic-header">
+        <h2>Web 框架 <span class="tag">框架设计</span></h2>
+        <p>基于 <code>net/http</code> 的 Web 框架：Trie 路由树 + 洋葱中间件 + 分组。</p>
+      </div>
+
+      <div class="design-card">
+        <h3>设计要点</h3>
+        <ul>
+          <li><strong>Trie 路由</strong>：每个 HTTP Method 一棵树，支持 <code>:param</code>（命名参数）和 <code>*wildcard</code>（通配）</li>
+          <li><strong>洋葱模型</strong>：中间件和 handler 存入同一个 <code>[]HandlerFunc</code>，<code>c.Next()</code> 推进 index，<code>c.Abort()</code> 跳过剩余</li>
+          <li><strong>分组</strong>：<code>RouterGroup</code> 共享同一 <code>Engine</code>；addRoute 时遍历所有 group，前缀匹配则收集其中间件</li>
+          <li><code>Context</code> 封装请求全部状态：Writer、Request、Params、keys(KV存储)</li>
+          <li>内置 <code>Logger</code>（洋葱后置统计耗时）和 <code>Recovery</code>（捕获 panic 返回 500）</li>
+        </ul>
+      </div>
+
+      <div class="file-tabs">
+        <div class="file-tabs-header">
+          <button class="file-tab-btn active" onclick="switchTab(this,'wf-context-pane')">context.go</button>
+          <button class="file-tab-btn" onclick="switchTab(this,'wf-router-pane')">router.go</button>
+          <button class="file-tab-btn" onclick="switchTab(this,'wf-engine-pane')">engine.go</button>
+        </div>
+        <div class="file-tab-pane active" id="wf-context-pane">
+          <div class="code-wrap">
+            <div class="code-filename">webframe/answer/context.go</div>
+            <pre><code class="language-go" id="code-wf-context"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>中间件机制</strong>：<code>handlers []HandlerFunc</code> 存放中间件链，<code>index</code> 从 -1 开始。<code>Next()</code> 递增 index 并执行对应 handler，中间件可以在 <code>c.Next()</code> 前后插入前置/后置逻辑（洋葱）。<code>Abort()</code> 将 index 设为 len，后续循环条件不成立，链路终止。<br><br>
+            <strong>KV 存储</strong>：用 <code>sync.RWMutex</code> 保护 <code>keys</code> map，允许中间件向 handler 传递数据（如认证后存入 userID）。
+          </div>
+        </div>
+        <div class="file-tab-pane" id="wf-router-pane">
+          <div class="code-wrap">
+            <div class="code-filename">webframe/answer/router.go</div>
+            <pre><code class="language-go" id="code-wf-router"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>Trie 路由</strong>：路径按 <code>/</code> 分段，每段对应一个 node。<code>isWild=true</code> 的节点（以 <code>:</code> 或 <code>*</code> 开头）能匹配任意同位段。<br><br>
+            <strong>insert vs search 的区别</strong>：insert 用 <code>matchChild</code>（找第一个匹配）——精确段优先，保证静态路由不被参数路由覆盖；search 用 <code>matchChildren</code>（找所有匹配）——需回溯以防歧义路由。<br><br>
+            <strong>参数提取</strong>：匹配成功后，将模式路径各段（如 <code>:id</code>）与实际 URL 各段对齐，提取具名参数写入 <code>params</code> map。
+          </div>
+        </div>
+        <div class="file-tab-pane" id="wf-engine-pane">
+          <div class="code-wrap">
+            <div class="code-filename">webframe/answer/engine.go</div>
+            <pre><code class="language-go" id="code-wf-engine"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>分组中间件</strong>：<code>addRoute</code> 遍历 <code>engine.groups</code>，凡是当前完整路径以某 group prefix 开头的，该 group 的中间件就适用。这样 <code>/api/v1/users</code> 会自动收集 root group 和 <code>/api</code> group 的中间件。<br><br>
+            <strong>共享 Engine</strong>：所有 <code>RouterGroup</code> 指向同一个 <code>Engine</code> 指针，共享 router 和 groups 列表。这是组合模式，避免了复杂的树形父子关系。
+          </div>
+        </div>
+      </div>
+
+      <div class="key-points">
+        <h3>核心考察点</h3>
+        <table>
+          <tr><th>问题</th><th>答案要点</th></tr>
+          <tr><td>Trie 路由 vs map 路由？</td><td>map 只支持精确路由；Trie 支持动态参数（<code>:id</code>）和通配（<code>*filepath</code>），查找复杂度 O(路径段数)。</td></tr>
+          <tr><td>洋葱模型如何实现前置/后置？</td><td>中间件在 <code>c.Next()</code> 之前的代码是前置，之后的是后置。<code>Next()</code> 递归推进使调用栈天然形成洋葱层级。</td></tr>
+          <tr><td><code>Abort</code> 是否立即停止？</td><td>是。将 index 跳到末尾，<code>Next()</code> 的 for 循环条件不满足，后续 handler 不再执行。但 Abort 之前的中间件的 defer 仍然会执行。</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ 5. Worker Pool ══════════════════════════════ -->
+    <section class="topic" id="workerpool">
+      <div class="topic-header">
+        <h2>工作池 <span class="tag">并发原语</span></h2>
+        <p>固定大小 goroutine 池，含 Future 模式与 FanIn/FanOut Pipeline。</p>
+      </div>
+
+      <div class="design-card">
+        <h3>设计要点（两大经典陷阱）</h3>
+        <ul>
+          <li><strong>陷阱1 — 关闭 channel 引发 panic</strong>：用 <code>close(taskQueue)</code> 通知退出时，<code>Submit</code> 可能在已关闭的 channel 上写入，panic。解法：<strong>taskQueue 永不关闭，用 nil sentinel 通知 worker 退出</strong></li>
+          <li><strong>陷阱2 — wg.Add 位置错误导致 Shutdown 提前返回</strong>：若 worker 内部才 Add(1)，Shutdown 调用 Wait() 时队列中可能还有任务但 wg 计数已为 0。解法：<strong>wg.Add(1) 在 Submit 时、持锁期间执行</strong></li>
+          <li><code>mu</code> 保护 shutdown 检查与 wg.Add 原子性，防止 Shutdown 与 Submit 竞态</li>
+          <li>Shutdown 顺序：标记关闭 → wg.Wait() → 发 nil sentinel，确保任务处理完才退出 worker</li>
+          <li>Future: channel 缓冲为 1，worker 写入结果不阻塞（即使调用方从未 Get）</li>
+        </ul>
+      </div>
+
+      <div class="file-tabs">
+        <div class="file-tabs-header">
+          <button class="file-tab-btn active" onclick="switchTab(this,'wp-pool-pane')">pool.go</button>
+        </div>
+        <div class="file-tab-pane active" id="wp-pool-pane">
+          <div class="code-wrap">
+            <div class="code-filename">workerpool/answer/pool.go</div>
+            <pre><code class="language-go" id="code-wp-pool"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>nil sentinel 退出</strong>：worker 的 <code>for task := range taskQueue</code> 会阻塞等待，收到 nil 后 <code>return</code>。Shutdown 发送 numWorkers 个 nil，精确唤醒每个 worker 各一次。<br><br>
+            <strong>Shutdown 为何先 Wait 再发 sentinel</strong>：Wait 返回时 taskQueue 已经被 worker 清空（所有任务执行完），此时发 nil，worker 读到 nil 时队列保证为空，干净退出。若先发 sentinel，nil 可能被某个 worker 在处理完真实任务前就读走，其他任务永远阻塞在 taskQueue 中。<br><br>
+            <strong>FanOut 精髓</strong>：多个 goroutine 并发 <code>range in</code>，Go channel 天然支持多读者竞争，无需额外分发逻辑——这是 fan-out 模式最简洁的表达。
+          </div>
+        </div>
+      </div>
+
+      <div class="key-points">
+        <h3>核心考察点</h3>
+        <table>
+          <tr><th>问题</th><th>答案要点</th></tr>
+          <tr><td>为何 wg.Add 不放在 worker 内部？</td><td>Worker 取到任务后才 Add，而 Shutdown 的 wg.Wait() 可能在 Add 前就执行，计数为 0，Wait 立即返回，导致部分任务未完成就退出。</td></tr>
+          <tr><td>为何不用 <code>close(taskQueue)</code>？</td><td>关闭后若 Submit 仍写入会 panic；且多个 goroutine 同时写一个已关闭的 channel 是 fatal error。nil sentinel 只需发送 N 次，精确、安全。</td></tr>
+          <tr><td>Future 的 ch 为何容量为 1？</td><td>让 worker 能无阻塞写入结果。若容量为 0，worker 必须等调用方 Get，造成 worker 白白占用（goroutine leak 风险）。</td></tr>
+          <tr><td>FanIn 如何安全关闭 out？</td><td>每个转发 goroutine 执行 <code>wg.Done()</code>，一个专用 goroutine <code>wg.Wait()</code> 后 <code>close(out)</code>，确保所有数据转发完毕才关闭。</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ 6. Conn Pool ══════════════════════════════ -->
+    <section class="topic" id="connpool">
+      <div class="topic-header">
+        <h2>连接池 <span class="tag">资源管理</span></h2>
+        <p>懒加载连接池：idle channel 兼做队列和信号量，CAS 无锁新建，优雅关闭。</p>
+      </div>
+
+      <div class="design-card">
+        <h3>设计要点</h3>
+        <ul>
+          <li><strong>idle channel 双重角色</strong>：<code>len(idle)</code> = 空闲数，<code>cap(idle)</code> = maxSize；阻塞读等空闲连接，非阻塞写归还</li>
+          <li><strong>CAS 控制新建</strong>：<code>atomic.CompareAndSwapInt64(&total, cur, cur+1)</code> 保证并发时只有一个 goroutine 成功新建，避免超量</li>
+          <li><strong>惰性淘汰</strong>：Get 时检查健康状态和空闲超时，不健康则 total-- 后 continue；后台无定时清理 goroutine</li>
+          <li><code>inUseDone WaitGroup</code>：Get 成功时 Add(1)，Put 时 Done()；Close 调用 Wait() 等全部归还</li>
+          <li><code>closeCh chan struct{}</code>：close 广播给所有阻塞的 Get，无需逐个通知</li>
+        </ul>
+      </div>
+
+      <div class="file-tabs">
+        <div class="file-tabs-header">
+          <button class="file-tab-btn active" onclick="switchTab(this,'cp-conn-pane')">conn.go</button>
+          <button class="file-tab-btn" onclick="switchTab(this,'cp-pool-pane')">pool.go</button>
+        </div>
+        <div class="file-tab-pane active" id="cp-conn-pane">
+          <div class="code-wrap">
+            <div class="code-filename">connpool/answer/conn.go</div>
+            <pre><code class="language-go" id="code-cp-conn"></code></pre>
+          </div>
+          <div class="commentary">
+            模拟连接对象，持有健康标志和最后使用时间。<code>MarkUnhealthy()</code> 模拟连接断开，<code>Do()</code> 模拟执行查询（不健康时返回 error）。
+          </div>
+        </div>
+        <div class="file-tab-pane" id="cp-pool-pane">
+          <div class="code-wrap">
+            <div class="code-filename">connpool/answer/pool.go</div>
+            <pre><code class="language-go" id="code-cp-pool"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>Get 三步逻辑</strong>：① 非阻塞取 idle（有空闲连接立即返回）→ ② idle 空则 CAS 新建（total 未达上限）→ ③ 达到上限则阻塞 select 等 idle/closeCh/ctx。每步都检查健康和超时，不合格则 total-- 重新循环。<br><br>
+            <strong>CAS 的必要性</strong>：若用 mutex 保护 total 的读-改-写，则每次 Get 都需要加锁，高并发下成为瓶颈。CAS 失败代价小（重新循环），在连接数未满时几乎总是成功一次。<br><br>
+            <strong>Close 顺序严格有序</strong>：① <code>atomic.Store(closed, 1)</code>（后续 Get 直接返回错误）→ ② <code>close(closeCh)</code>（唤醒阻塞的 Get）→ ③ <code>inUseDone.Wait()</code>（等借出连接归还）→ ④ 排空 idle。顺序不能乱，否则可能泄漏连接或 double-close。
+          </div>
+        </div>
+      </div>
+
+      <div class="key-points">
+        <h3>核心考察点</h3>
+        <table>
+          <tr><th>问题</th><th>答案要点</th></tr>
+          <tr><td>idle channel 为何能当信号量？</td><td><code>cap(idle)=maxSize</code>，写满后阻塞相当于 semaphore；但这里 total 独立计数，channel 只放空闲连接，借出的不在 channel 里。</td></tr>
+          <tr><td>为何 Put 用非阻塞 select+default？</td><td>极端情况（如 Close 后仍有连接归还），idle 已满则 Put 阻塞。non-blocking 防止归还方永久阻塞。</td></tr>
+          <tr><td>如何防止 Close 时泄漏借出的连接？</td><td><code>inUseDone WaitGroup</code>：每次 Get 成功 Add(1)，Put 时 Done()；Close 调用 Wait() 阻塞直到全部归还。</td></tr>
+          <tr><td>健康检查在哪里做？</td><td>惰性：取出时检查（Get）和归还时检查（Put），不健康直接丢弃并 total--。无后台 goroutine，简单可靠。</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ 7. Rate Limiter ══════════════════════════════ -->
+    <section class="topic" id="ratelimiter">
+      <div class="topic-header">
+        <h2>限流器 <span class="tag">流量控制</span></h2>
+        <p>令牌桶（惰性补充）+ 滑动窗口（时间戳队列），两种经典限流算法完整实现。</p>
+      </div>
+
+      <div class="design-card">
+        <h3>设计要点</h3>
+        <ul>
+          <li><strong>令牌桶 — 惰性补充</strong>：不起后台 goroutine，每次 Allow/Wait 时按"经过时间 × rate"计算补充量，<code>min(tokens+补充, burst)</code></li>
+          <li>Allow 非阻塞；Wait 计算需要等待的时长，<code>time.After</code> + ctx 双路 select</li>
+          <li><strong>滑动窗口 — 时间戳队列</strong>：维护升序时间戳切片，每次 Allow 先淘汰窗口外记录，再判总数是否达到 limit</li>
+          <li>滑动窗口空间复杂度 O(limit)：超过 limit 的请求被拒，不追加时间戳，无内存泄漏</li>
+          <li>两者都用 <code>sync.Mutex</code>，全程持锁，并发安全</li>
+        </ul>
+      </div>
+
+      <div class="file-tabs">
+        <div class="file-tabs-header">
+          <button class="file-tab-btn active" onclick="switchTab(this,'rl-rl-pane')">ratelimiter.go</button>
+        </div>
+        <div class="file-tab-pane active" id="rl-rl-pane">
+          <div class="code-wrap">
+            <div class="code-filename">ratelimiter/answer/ratelimiter.go</div>
+            <pre><code class="language-go" id="code-rl-rl"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>令牌桶惰性补充的优势</strong>：无后台 goroutine，无需 Stop/Close，生命周期简单。代价是每次操作多一次时间计算（纳秒级，可忽略）。Go 标准库 <code>golang.org/x/time/rate</code> 也采用这种设计。<br><br>
+            <strong>Wait 的原子性</strong>：先释放锁计算等待时长，等待结束后再次加锁 refill+扣令牌。两次加锁之间令牌可能被其他 goroutine 消耗，所以等待结束后必须再次 refill，确保令牌充足。<br><br>
+            <strong>滑动窗口 vs 固定窗口</strong>：固定窗口（计数器在整点重置）在窗口边界有"突刺"问题——前一窗口末尾 + 后一窗口开头可以瞬间通过 2×limit 请求。滑动窗口以"当前时刻往前推 windowSize"为视口，无突刺，但内存占用更高。
+          </div>
+        </div>
+      </div>
+
+      <div class="key-points">
+        <h3>核心考察点</h3>
+        <table>
+          <tr><th>问题</th><th>答案要点</th></tr>
+          <tr><td>令牌桶 vs 漏桶？</td><td>令牌桶允许突发（桶满时可消耗 burst 个令牌）；漏桶以恒定速率流出，无突发能力。令牌桶更适合允许短暂流量峰值的场景。</td></tr>
+          <tr><td>滑动窗口的时间复杂度？</td><td>O(k)，k 为窗口内请求数。淘汰过期记录是线性扫描；若用二分搜索可优化到 O(log k)，但窗口通常不大，线性已足够。</td></tr>
+          <tr><td>为何滑动窗口空间是 O(limit)？</td><td>超过 limit 的请求被拒绝不追加，时间戳切片最多 limit 个元素；旧时间戳被淘汰后切片缩减，内存稳定。</td></tr>
+          <tr><td>生产中用哪个？</td><td>单机限流优先令牌桶（<code>x/time/rate</code>）；分布式限流用 Redis INCR + expire（固定窗口）或 Redis sorted set（滑动窗口）。</td></tr>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(btn, paneId) {
+  const tabsEl = btn.closest('.file-tabs');
+  tabsEl.querySelectorAll('.file-tab-btn').forEach(b => b.classList.remove('active'));
+  tabsEl.querySelectorAll('.file-tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(paneId).classList.add('active');
+}
+
+// ── Code content ───────────────────────────────────────────────────────────
+const codes = {};
+
+codes['tcp-main'] = `// 答案版本：在 TCP 之上的自定义应用层协议完整实现
+//
+// 协议格式（12 字节定长头部 + 变长 Body）：
+//
+//  +---------+---------+---------+---------+
+//  | Magic   | Version |  Type   | Reserved|
+//  | 2 bytes | 1 byte  | 1 byte  | 1 byte  |
+//  +---------+---------+---------+---------+
+//  | Seq             (4 bytes, big-endian) |
+//  +---------------------------------------+
+//  | BodyLen         (4 bytes, big-endian) |
+//  +---------------------------------------+
+//  | Body            (N bytes)             |
+//  +---------------------------------------+
+//
+// 运行方式:
+//   go run main.go -mode server
+//   go run main.go -mode client -msg "hello"
+package main
+
+import (
+	"bufio"
+	"bytes"
+	"encoding/binary"
+	"flag"
+	"fmt"
+	"io"
+	"net"
+	"os"
+	"sync/atomic"
+)
+
+// -------- 协议常量 --------
+
+const (
+	Magic   uint16 = 0xCAFE
+	Version uint8  = 0x01
+
+	HeaderLen = 12 // 固定头部长度（字节）
+
+	TypePing uint8 = 0x01
+	TypePong uint8 = 0x02
+	TypeData uint8 = 0x03
+	TypeErr  uint8 = 0x04
+)
+
+// -------- 数据结构 --------
+
+// Header 是协议固定头部。
+type Header struct {
+	Magic    uint16
+	Version  uint8
+	Type     uint8
+	Reserved uint8
+	Seq      uint32
+	BodyLen  uint32
+}
+
+// Message 是一个完整的协议消息。
+type Message struct {
+	Header
+	Body []byte
+}
+
+// -------- 编解码 --------
+
+// Encode 将 Message 序列化为字节流（大端序）。
+func Encode(msg *Message) ([]byte, error) {
+	msg.Magic = Magic
+	msg.Version = Version
+	msg.BodyLen = uint32(len(msg.Body))
+
+	buf := new(bytes.Buffer)
+
+	if err := binary.Write(buf, binary.BigEndian, msg.Header); err != nil {
+		return nil, fmt.Errorf("encode header: %w", err)
+	}
+	if _, err := buf.Write(msg.Body); err != nil {
+		return nil, fmt.Errorf("encode body: %w", err)
+	}
+	return buf.Bytes(), nil
+}
+
+// Decode 从 reader 中读取并反序列化一个 Message。
+// 解决 TCP 粘包/拆包：
+//  1. io.ReadFull 读取固定 HeaderLen 字节 → 解析 Header
+//  2. 校验 Magic / Version
+//  3. 按 Header.BodyLen 再 io.ReadFull 读 Body
+func Decode(r io.Reader) (*Message, error) {
+	headerBuf := make([]byte, HeaderLen)
+	if _, err := io.ReadFull(r, headerBuf); err != nil {
+		return nil, fmt.Errorf("read header: %w", err)
+	}
+
+	var hdr Header
+	if err := binary.Read(bytes.NewReader(headerBuf), binary.BigEndian, &hdr); err != nil {
+		return nil, fmt.Errorf("decode header: %w", err)
+	}
+
+	if hdr.Magic != Magic {
+		return nil, fmt.Errorf("invalid magic: 0x%X", hdr.Magic)
+	}
+	if hdr.Version != Version {
+		return nil, fmt.Errorf("unsupported version: %d", hdr.Version)
+	}
+
+	body := make([]byte, hdr.BodyLen)
+	if hdr.BodyLen > 0 {
+		if _, err := io.ReadFull(r, body); err != nil {
+			return nil, fmt.Errorf("read body: %w", err)
+		}
+	}
+
+	return &Message{Header: hdr, Body: body}, nil
+}
+
+// -------- 服务端 --------
+
+func StartServer(addr string) error {
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("listen: %w", err)
+	}
+	defer ln.Close()
+
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "accept error:", err)
+			continue
+		}
+		go handleConn(conn)
+	}
+}
+
+func handleConn(conn net.Conn) {
+	defer conn.Close()
+
+	remote := conn.RemoteAddr()
+	fmt.Printf("[server] new conn from %s\\n", remote)
+	defer fmt.Printf("[server] conn closed: %s\\n", remote)
+
+	reader := bufio.NewReader(conn)
+	for {
+		req, err := Decode(reader)
+		if err != nil {
+			if err != io.EOF {
+				fmt.Fprintf(os.Stderr, "[server] decode error from %s: %v\\n", remote, err)
+			}
+			return
+		}
+		fmt.Printf("[server] recv seq=%d type=0x%02X body=%q\\n", req.Seq, req.Type, req.Body)
+
+		resp := processMessage(req)
+		data, err := Encode(resp)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "[server] encode error:", err)
+			return
+		}
+		if _, err := conn.Write(data); err != nil {
+			fmt.Fprintln(os.Stderr, "[server] write error:", err)
+			return
+		}
+	}
+}
+
+func processMessage(req *Message) *Message {
+	resp := &Message{}
+	resp.Seq = req.Seq
+
+	switch req.Type {
+	case TypePing:
+		resp.Type = TypePong
+	case TypeData:
+		resp.Type = TypeData
+		resp.Body = append([]byte(nil), req.Body...)
+	default:
+		resp.Type = TypeErr
+		resp.Body = []byte("unknown type")
+	}
+	return resp
+}
+
+// -------- 客户端 --------
+
+var globalSeq uint32
+
+func SendMessage(addr, text string) error {
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("dial: %w", err)
+	}
+	defer conn.Close()
+
+	seq := atomic.AddUint32(&globalSeq, 1)
+	req := &Message{
+		Header: Header{Type: TypeData, Seq: seq},
+		Body:   []byte(text),
+	}
+
+	data, err := Encode(req)
+	if err != nil {
+		return fmt.Errorf("encode: %w", err)
+	}
+	if _, err := conn.Write(data); err != nil {
+		return fmt.Errorf("write: %w", err)
+	}
+	fmt.Printf("[client] sent seq=%d body=%q\\n", seq, text)
+
+	reader := bufio.NewReader(conn)
+	resp, err := Decode(reader)
+	if err != nil {
+		return fmt.Errorf("decode response: %w", err)
+	}
+	fmt.Printf("[client] recv seq=%d type=0x%02X body=%q\\n", resp.Seq, resp.Type, resp.Body)
+	return nil
+}
+
+// -------- main --------
+
+func main() {
+	mode := flag.String("mode", "server", "server | client")
+	addr := flag.String("addr", "127.0.0.1:9000", "listen/connect address")
+	msg  := flag.String("msg", "hello", "message to send (client mode)")
+	flag.Parse()
+
+	var err error
+	switch *mode {
+	case "server":
+		fmt.Printf("server listening on %s\\n", *addr)
+		err = StartServer(*addr)
+	case "client":
+		err = SendMessage(*addr, *msg)
+	default:
+		fmt.Fprintln(os.Stderr, "unknown mode:", *mode)
+		os.Exit(1)
+	}
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		os.Exit(1)
+	}
+}`;
+
+codes['lru-lru'] = `// 答案版本：线程安全的 LRU（Least Recently Used）缓存完整实现
+//
+// 数据结构：双向链表 + 哈希表
+//   - 链表头部 = 最近使用；链表尾部 = 最久未用
+//   - 哨兵头尾节点简化边界处理，避免空指针判断
+//   - sync.Mutex 保证并发安全
+//
+// 所有操作均为 O(1)。
+package lru
+
+import "sync"
+
+type node struct {
+	key, val   int
+	prev, next *node
+}
+
+type LRUCache struct {
+	cap        int
+	mu         sync.Mutex
+	cache      map[int]*node
+	head, tail *node // 哨兵节点，不存储数据
+}
+
+// NewLRUCache 创建容量为 cap 的 LRU 缓存。
+// head <-> tail 构成空链表的初始状态。
+func NewLRUCache(cap int) *LRUCache {
+	head := &node{}
+	tail := &node{}
+	head.next = tail
+	tail.prev = head
+
+	return &LRUCache{
+		cap:   cap,
+		cache: make(map[int]*node, cap),
+		head:  head,
+		tail:  tail,
+	}
+}
+
+// Get 返回 key 对应的值；若不存在返回 -1。
+// 访问后将该节点移到链表头部（标记为最近使用）。
+func (c *LRUCache) Get(key int) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	n, ok := c.cache[key]
+	if !ok {
+		return -1
+	}
+	c.moveToFront(n)
+	return n.val
+}
+
+// Put 插入或更新 key-value。
+//   - key 已存在：更新值并移到头部。
+//   - key 不存在：新建节点插到头部；若超出容量则摘除尾部节点。
+func (c *LRUCache) Put(key, val int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if n, ok := c.cache[key]; ok {
+		n.val = val
+		c.moveToFront(n)
+		return
+	}
+
+	n := &node{key: key, val: val}
+	c.cache[key] = n
+	c.addToFront(n)
+
+	if len(c.cache) > c.cap {
+		evicted := c.removeLast()
+		delete(c.cache, evicted.key)
+	}
+}
+
+// ---------- 链表操作 ----------
+
+// addToFront 将节点插入到哨兵头节点之后。
+func (c *LRUCache) addToFront(n *node) {
+	n.prev = c.head
+	n.next = c.head.next
+	c.head.next.prev = n
+	c.head.next = n
+}
+
+// remove 将节点从链表中摘除。
+func (c *LRUCache) remove(n *node) {
+	n.prev.next = n.next
+	n.next.prev = n.prev
+}
+
+// removeLast 摘除并返回尾哨兵前的节点（最久未用）。
+func (c *LRUCache) removeLast() *node {
+	last := c.tail.prev
+	c.remove(last)
+	return last
+}
+
+// moveToFront 将已在链表中的节点移到逻辑头部。
+func (c *LRUCache) moveToFront(n *node) {
+	c.remove(n)
+	c.addToFront(n)
+}`;
+
+codes['sk-seckill'] = `// 答案版本：简单秒杀服务完整实现
+//
+// 核心思路：
+//   - 单把 sync.Mutex 保护整个临界区（查重复 + 查库存 + 扣库存 + 写订单）
+//   - 临界区内操作全为内存操作，持锁时间极短
+//   - sold map 实现 O(1) 用户去重
+package seckill
+
+import (
+	"errors"
+	"fmt"
+	"sync"
+	"sync/atomic"
+	"time"
+)
+
+var (
+	ErrOutOfStock    = errors.New("out of stock")
+	ErrAlreadyBought = errors.New("already bought")
+)
+
+type Order struct {
+	ID        string
+	UserID    int64
+	CreatedAt time.Time
+}
+
+// SeckillService 是秒杀服务的核心。
+// mu 保护 stock、sold、orders 三者的一致性。
+// 先判重复购买（短路），再判库存，最后才扣减——顺序不能乱。
+type SeckillService struct {
+	mu     sync.Mutex
+	stock  int
+	sold   map[int64]bool
+	orders []Order
+}
+
+func NewSeckillService(stock int) *SeckillService {
+	return &SeckillService{
+		stock:  stock,
+		sold:   make(map[int64]bool, stock),
+		orders: make([]Order, 0, stock),
+	}
+}
+
+// Seckill 为 userID 执行一次秒杀。
+//
+// 并发安全分析：
+//   若将"查库存"和"扣库存"拆成两次加锁，两次锁之间库存可能被其他协程耗尽，导致超卖。
+//   因此必须在同一把锁内完成：check -> deduct -> record。
+func (s *SeckillService) Seckill(userID int64) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// 1. 去重：同一用户只能买一次
+	if s.sold[userID] {
+		return "", ErrAlreadyBought
+	}
+
+	// 2. 检查库存
+	if s.stock <= 0 {
+		return "", ErrOutOfStock
+	}
+
+	// 3. 扣库存 + 记录订单（原子操作，不可分割）
+	s.stock--
+	s.sold[userID] = true
+	order := Order{
+		ID:        newOrderID(),
+		UserID:    userID,
+		CreatedAt: time.Now(),
+	}
+	s.orders = append(s.orders, order)
+
+	return order.ID, nil
+}
+
+func (s *SeckillService) Stock() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.stock
+}
+
+func (s *SeckillService) Orders() []Order {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	cp := make([]Order, len(s.orders))
+	copy(cp, s.orders)
+	return cp
+}
+
+var orderSeq uint64
+
+func newOrderID() string {
+	seq := atomic.AddUint64(&orderSeq, 1)
+	return fmt.Sprintf("ORD-%d-%d", time.Now().UnixNano(), seq)
+}`;
+
+codes['sk-handler'] = `// HTTP 层：秒杀接口完整实现
+//
+// POST /seckill?user_id=123
+//   成功 → 200  {"order_id": "ORD-..."}
+//   库存不足 → 409  {"error": "out of stock"}
+//   重复购买 → 409  {"error": "already bought"}
+//
+// GET /stock
+//   → 200  {"stock": 42}
+package seckill
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
+)
+
+type Handler struct {
+	svc *SeckillService
+}
+
+func NewHandler(svc *SeckillService) *Handler {
+	return &Handler{svc: svc}
+}
+
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	switch r.URL.Path {
+	case "/seckill":
+		h.handleSeckill(w, r)
+	case "/stock":
+		h.handleStock(w, r)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (h *Handler) handleSeckill(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+		return
+	}
+
+	userID, err := parseUserID(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+
+	orderID, err := h.svc.Seckill(userID)
+	if err != nil {
+		if errors.Is(err, ErrOutOfStock) || errors.Is(err, ErrAlreadyBought) {
+			writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"order_id": orderID})
+}
+
+func (h *Handler) handleStock(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]int{"stock": h.svc.Stock()})
+}
+
+func writeJSON(w http.ResponseWriter, code int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(v)
+}
+
+func parseUserID(r *http.Request) (int64, error) {
+	raw := r.URL.Query().Get("user_id")
+	if raw == "" {
+		return 0, errors.New("missing user_id")
+	}
+	return strconv.ParseInt(raw, 10, 64)
+}`;
+
+codes['wf-context'] = `// context.go — 请求上下文完整实现
+package webframe
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"sync"
+)
+
+type HandlerFunc func(*Context)
+
+// Context 封装单次 HTTP 请求的所有状态。
+//
+// 设计要点：
+//   - handlers 切片按顺序存放中间件 + 最终 handler
+//   - index 从 -1 开始，Next() 每次递增后执行对应 handler
+//   - Abort() 将 index 直接跳到末尾，后续 handler 不再执行
+type Context struct {
+	Writer  http.ResponseWriter
+	Request *http.Request
+
+	Params map[string]string
+
+	handlers []HandlerFunc
+	index    int
+
+	mu   sync.RWMutex
+	keys map[string]any
+}
+
+func newContext(w http.ResponseWriter, r *http.Request) *Context {
+	return &Context{
+		Writer:  w,
+		Request: r,
+		Params:  make(map[string]string),
+		index:   -1,
+	}
+}
+
+// ---------- 中间件控制 ----------
+
+// Next 推进到下一个 handler 并执行。
+// 中间件模板：
+//
+//	func MW() HandlerFunc {
+//	    return func(c *Context) {
+//	        // 前置逻辑
+//	        c.Next()
+//	        // 后置逻辑（此时下游已执行完毕）
+//	    }
+//	}
+func (c *Context) Next() {
+	c.index++
+	for ; c.index < len(c.handlers); c.index++ {
+		c.handlers[c.index](c)
+	}
+}
+
+// Abort 终止中间件链。
+func (c *Context) Abort() {
+	c.index = len(c.handlers)
+}
+
+// ---------- 请求读取 ----------
+
+func (c *Context) Param(key string) string    { return c.Params[key] }
+func (c *Context) Query(key string) string    { return c.Request.URL.Query().Get(key) }
+func (c *Context) PostForm(key string) string { return c.Request.FormValue(key) }
+
+// ---------- KV 存储 ----------
+
+func (c *Context) Set(key string, val any) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.keys == nil {
+		c.keys = make(map[string]any)
+	}
+	c.keys[key] = val
+}
+
+func (c *Context) Get(key string) (any, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	v, ok := c.keys[key]
+	return v, ok
+}
+
+// ---------- 响应写入 ----------
+
+func (c *Context) Status(code int) { c.Writer.WriteHeader(code) }
+
+func (c *Context) SetHeader(key, val string) { c.Writer.Header().Set(key, val) }
+
+func (c *Context) String(code int, format string, values ...any) {
+	c.SetHeader("Content-Type", "text/plain; charset=utf-8")
+	c.Status(code)
+	fmt.Fprintf(c.Writer, format, values...)
+}
+
+func (c *Context) JSON(code int, obj any) {
+	c.SetHeader("Content-Type", "application/json; charset=utf-8")
+	c.Status(code)
+	_ = json.NewEncoder(c.Writer).Encode(obj)
+}
+
+func (c *Context) Data(code int, contentType string, data []byte) {
+	c.SetHeader("Content-Type", contentType)
+	c.Status(code)
+	_, _ = c.Writer.Write(data)
+}
+
+func (c *Context) Fail(code int, msg string) {
+	c.JSON(code, map[string]string{"error": msg})
+}`;
+
+codes['wf-router'] = `// router.go — Trie 路由树完整实现
+package webframe
+
+import (
+	"fmt"
+	"strings"
+)
+
+// node 是 Trie 的一个节点，对应路径中的一段。
+type node struct {
+	path     string  // 完整路由模式（仅叶子节点有值），如 "/users/:id"
+	part     string  // 本节点的段，如 "users"、":id"、"*filepath"
+	children []*node
+	isWild   bool    // part 以 ":" 或 "*" 开头时为 true
+}
+
+func (n *node) String() string {
+	return fmt.Sprintf("node{path=%s, part=%s, isWild=%v}", n.path, n.part, n.isWild)
+}
+
+// matchChild 找到第一个能匹配 part 的子节点（插入时使用）。
+// 精确匹配优先，保证静态路由不被参数路由覆盖。
+func (n *node) matchChild(part string) *node {
+	for _, child := range n.children {
+		if child.part == part || child.isWild {
+			return child
+		}
+	}
+	return nil
+}
+
+// matchChildren 找到所有能匹配 part 的子节点（查找时使用）。
+func (n *node) matchChildren(part string) []*node {
+	var nodes []*node
+	for _, child := range n.children {
+		if child.part == part || child.isWild {
+			nodes = append(nodes, child)
+		}
+	}
+	return nodes
+}
+
+// insert 将路由模式递归插入 Trie。
+// 关键点：通配符节点（"*"）直接终止向下插入。
+func (n *node) insert(pattern string, parts []string, height int) {
+	if len(parts) == height {
+		n.path = pattern
+		return
+	}
+
+	part := parts[height]
+	child := n.matchChild(part)
+	if child == nil {
+		child = &node{
+			part:   part,
+			isWild: part[0] == ':' || part[0] == '*',
+		}
+		n.children = append(n.children, child)
+	}
+	child.insert(pattern, parts, height+1)
+}
+
+// search 在 Trie 中递归查找匹配的叶子节点。
+// 通配符节点（part[0]=='*'）直接匹配剩余路径，终止递归。
+func (n *node) search(parts []string, height int) *node {
+	if len(parts) == height || strings.HasPrefix(n.part, "*") {
+		if n.path == "" {
+			return nil
+		}
+		return n
+	}
+
+	part := parts[height]
+	children := n.matchChildren(part)
+	for _, child := range children {
+		if result := child.search(parts, height+1); result != nil {
+			return result
+		}
+	}
+	return nil
+}
+
+// ---------- Router ----------
+
+type router struct {
+	roots    map[string]*node
+	handlers map[string][]HandlerFunc
+}
+
+func newRouter() *router {
+	return &router{
+		roots:    make(map[string]*node),
+		handlers: make(map[string][]HandlerFunc),
+	}
+}
+
+// parsePath 将路径按 "/" 分割为各段，遇到通配符截止。
+func parsePath(path string) []string {
+	vs := strings.Split(path, "/")
+	parts := make([]string, 0, len(vs))
+	for _, v := range vs {
+		if v != "" {
+			parts = append(parts, v)
+			if v[0] == '*' {
+				break
+			}
+		}
+	}
+	return parts
+}
+
+func (r *router) addRoute(method, path string, handlers []HandlerFunc) {
+	parts := parsePath(path)
+	key := method + "-" + path
+
+	if _, ok := r.roots[method]; !ok {
+		r.roots[method] = &node{}
+	}
+	r.roots[method].insert(path, parts, 0)
+	r.handlers[key] = handlers
+}
+
+// getRoute 查找路由，返回匹配节点和动态参数。
+func (r *router) getRoute(method, path string) (*node, map[string]string) {
+	searchParts := parsePath(path)
+	params := make(map[string]string)
+
+	root, ok := r.roots[method]
+	if !ok {
+		return nil, nil
+	}
+
+	n := root.search(searchParts, 0)
+	if n == nil {
+		return nil, nil
+	}
+
+	parts := parsePath(n.path)
+	for idx, part := range parts {
+		if part[0] == ':' {
+			params[part[1:]] = searchParts[idx]
+		}
+		if part[0] == '*' && len(part) > 1 {
+			params[part[1:]] = strings.Join(searchParts[idx:], "/")
+			break
+		}
+	}
+	return n, params
+}
+
+func (r *router) handle(c *Context) {
+	n, params := r.getRoute(c.Request.Method, c.Request.URL.Path)
+	if n == nil {
+		c.handlers = append(c.handlers, func(c *Context) {
+			c.String(404, "404 Not Found: %s\\n", c.Request.URL.Path)
+		})
+	} else {
+		c.Params = params
+		key := c.Request.Method + "-" + n.path
+		c.handlers = append(c.handlers, r.handlers[key]...)
+	}
+	c.Next()
+}`;
+
+codes['wf-engine'] = `// engine.go — 框架入口完整实现
+package webframe
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"path"
+	"runtime/debug"
+	"strings"
+	"time"
+)
+
+// RouterGroup 代表一个路由分组，支持嵌套和中间件。
+type RouterGroup struct {
+	prefix      string
+	middlewares []HandlerFunc
+	engine      *Engine
+}
+
+// Engine 是框架核心，实现 http.Handler。
+type Engine struct {
+	*RouterGroup
+	router *router
+	groups []*RouterGroup
+}
+
+func New() *Engine {
+	engine := &Engine{router: newRouter()}
+	engine.RouterGroup = &RouterGroup{engine: engine}
+	engine.groups = []*RouterGroup{engine.RouterGroup}
+	return engine
+}
+
+// ---------- 分组 ----------
+
+// Group 创建子分组，继承父前缀。
+// 子分组和父分组共享同一个 engine，从而共享 router 和 groups 列表。
+func (g *RouterGroup) Group(prefix string) *RouterGroup {
+	child := &RouterGroup{
+		prefix: g.prefix + prefix,
+		engine: g.engine,
+	}
+	g.engine.groups = append(g.engine.groups, child)
+	return child
+}
+
+func (g *RouterGroup) Use(middlewares ...HandlerFunc) {
+	g.middlewares = append(g.middlewares, middlewares...)
+}
+
+// ---------- 路由注册 ----------
+
+// addRoute 合并前缀，收集适用中间件，注册到 router。
+// 中间件归属规则：遍历所有分组，若当前路径以某分组 prefix 开头，
+// 则该分组的中间件适用于本路由。
+func (g *RouterGroup) addRoute(method, comp string, handler HandlerFunc) {
+	fullPath := path.Join(g.prefix, comp)
+
+	var handlers []HandlerFunc
+	for _, group := range g.engine.groups {
+		if strings.HasPrefix(fullPath, group.prefix) {
+			handlers = append(handlers, group.middlewares...)
+		}
+	}
+	handlers = append(handlers, handler)
+
+	g.engine.router.addRoute(method, fullPath, handlers)
+}
+
+func (g *RouterGroup) GET(path string, handler HandlerFunc)    { g.addRoute("GET", path, handler) }
+func (g *RouterGroup) POST(path string, handler HandlerFunc)   { g.addRoute("POST", path, handler) }
+func (g *RouterGroup) PUT(path string, handler HandlerFunc)    { g.addRoute("PUT", path, handler) }
+func (g *RouterGroup) DELETE(path string, handler HandlerFunc) { g.addRoute("DELETE", path, handler) }
+
+// ---------- http.Handler ----------
+
+func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	c := newContext(w, r)
+	e.router.handle(c)
+}
+
+func (e *Engine) Run(addr string) error {
+	log.Printf("webframe listening on %s\\n", addr)
+	return http.ListenAndServe(addr, e)
+}
+
+// ---------- 内置中间件 ----------
+
+// Logger 记录每次请求的方法、路径和耗时（洋葱模型后置统计）。
+func Logger() HandlerFunc {
+	return func(c *Context) {
+		start := time.Now()
+		c.Next()
+		log.Printf("[%d] %s %s  %v",
+			200, c.Request.Method, c.Request.URL.Path, time.Since(start))
+	}
+}
+
+// Recovery 捕获下游 panic，返回 500，防止进程崩溃。
+func Recovery() HandlerFunc {
+	return func(c *Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("[Recovery] panic: %v\\n%s", err, debug.Stack())
+				c.Fail(http.StatusInternalServerError, fmt.Sprintf("%v", err))
+			}
+		}()
+		c.Next()
+	}
+}`;
+
+codes['wp-pool'] = `// 答案版本：基于 channel 的并发工作池完整实现
+//
+// 设计要点（两个常见陷阱及其解法）：
+//
+//	陷阱1 — 关闭 taskQueue 引发 panic：
+//	  若用 close(taskQueue) 通知 worker 退出，而 Submit 的 select 同时监听
+//	  taskQueue 和 closed，两路同时就绪时 Go 随机选择；若选中 taskQueue<-task
+//	  但 taskQueue 已被关闭，则 panic。
+//	  解法：taskQueue 永不关闭，用 nil sentinel 通知 worker 退出。
+//
+//	陷阱2 — wg.Add 在 worker 内部导致 Shutdown 提前返回：
+//	  若 worker 取到任务后才 wg.Add(1)，Shutdown 调用 wg.Wait() 时
+//	  可能队列里还有任务但 wg 计数已为 0，Wait 立即返回。
+//	  解法：wg.Add(1) 在 Submit 时做，wg.Done() 在 worker 执行完任务后做。
+package workerpool
+
+import (
+	"context"
+	"errors"
+	"sync"
+)
+
+var ErrPoolClosed = errors.New("worker pool is closed")
+
+type Task func()
+
+// WorkerPool 是固定大小的 goroutine 池。
+type WorkerPool struct {
+	taskQueue  chan Task
+	numWorkers int
+	mu         sync.Mutex
+	shutdown   bool
+	wg         sync.WaitGroup
+	once       sync.Once
+}
+
+// NewWorkerPool 创建池并启动 workers 个常驻 goroutine。
+// worker 循环消费 taskQueue，收到 nil sentinel 时退出。
+func NewWorkerPool(workers, queueSize int) *WorkerPool {
+	p := &WorkerPool{
+		taskQueue:  make(chan Task, queueSize),
+		numWorkers: workers,
+	}
+	for i := 0; i < workers; i++ {
+		go func() {
+			for task := range p.taskQueue {
+				if task == nil { // sentinel：退出
+					return
+				}
+				task()
+				p.wg.Done()
+			}
+		}()
+	}
+	return p
+}
+
+// Submit 阻塞投递任务；池已关闭时返回 ErrPoolClosed。
+// mu 保证 shutdown 检查与 wg.Add 原子执行。
+func (p *WorkerPool) Submit(task Task) error {
+	p.mu.Lock()
+	if p.shutdown {
+		p.mu.Unlock()
+		return ErrPoolClosed
+	}
+	p.wg.Add(1) // 持锁期间 Add，保证 Shutdown 的 wg.Wait 能感知
+	p.mu.Unlock()
+
+	p.taskQueue <- task
+	return nil
+}
+
+// TrySubmit 非阻塞投递；池关闭或队列满时返回 false。
+func (p *WorkerPool) TrySubmit(task Task) bool {
+	p.mu.Lock()
+	if p.shutdown {
+		p.mu.Unlock()
+		return false
+	}
+	p.wg.Add(1)
+	p.mu.Unlock()
+
+	select {
+	case p.taskQueue <- task:
+		return true
+	default:
+		p.wg.Done() // 撤销 Add
+		return false
+	}
+}
+
+// Shutdown 优雅关闭，步骤严格有序：
+//  1. shutdown=true   — 后续 Submit 直接返回 ErrPoolClosed
+//  2. wg.Wait()       — 等待所有已提交（含队列中）的任务执行完毕
+//  3. 发送 nil sentinel — 逐个唤醒并终止 worker
+func (p *WorkerPool) Shutdown() {
+	p.once.Do(func() {
+		p.mu.Lock()
+		p.shutdown = true
+		p.mu.Unlock()
+
+		p.wg.Wait() // 等待所有已提交任务完成
+
+		for i := 0; i < p.numWorkers; i++ {
+			p.taskQueue <- nil // sentinel：让每个 worker 退出
+		}
+	})
+}
+
+// ─────────────────────────────────────────
+// Future：带返回值的任务
+// ─────────────────────────────────────────
+
+type Result struct {
+	Value any
+	Err   error
+}
+
+// Future 代表一个尚未完成的计算。
+// ch 缓冲为 1：即使调用方从未调用 Get，worker 也不会阻塞在写入上。
+type Future struct {
+	ch chan Result
+}
+
+func (f *Future) Get(ctx context.Context) (Result, error) {
+	select {
+	case res := <-f.ch:
+		return res, nil
+	case <-ctx.Done():
+		return Result{}, ctx.Err()
+	}
+}
+
+func SubmitFuture(p *WorkerPool, fn func() (any, error)) (*Future, error) {
+	f := &Future{ch: make(chan Result, 1)}
+	err := p.Submit(func() {
+		val, err := fn()
+		f.ch <- Result{Value: val, Err: err}
+	})
+	if err != nil {
+		return nil, err
+	}
+	return f, nil
+}
+
+// ─────────────────────────────────────────
+// Pipeline：FanIn / FanOut
+// ─────────────────────────────────────────
+
+// FanIn 将多个输入 channel 合并为一个输出 channel。
+func FanIn(ctx context.Context, ins ...<-chan int) <-chan int {
+	out := make(chan int)
+	var wg sync.WaitGroup
+
+	forward := func(in <-chan int) {
+		defer wg.Done()
+		for {
+			select {
+			case v, ok := <-in:
+				if !ok {
+					return
+				}
+				select {
+				case out <- v:
+				case <-ctx.Done():
+					return
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}
+
+	wg.Add(len(ins))
+	for _, in := range ins {
+		go forward(in)
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
+}
+
+// FanOut 从一个输入 channel 读取，n 个 worker 并行处理后汇入输出 channel。
+// Go channel 天然支持多 goroutine 并发读取，这正是 fan-out 模式的精髓。
+func FanOut(ctx context.Context, in <-chan int, n int, fn func(int) int) <-chan int {
+	out := make(chan int)
+	var wg sync.WaitGroup
+
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case v, ok := <-in:
+					if !ok {
+						return
+					}
+					select {
+					case out <- fn(v):
+					case <-ctx.Done():
+						return
+					}
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
+}`;
+
+codes['cp-conn'] = `// conn.go — 模拟连接完整实现
+package connpool
+
+import (
+	"fmt"
+	"sync/atomic"
+	"time"
+)
+
+var connIDGen uint64
+
+type Conn struct {
+	id        uint64
+	healthy   bool
+	createdAt time.Time
+	lastUsed  time.Time
+}
+
+func newConn() *Conn {
+	return &Conn{
+		id:        atomic.AddUint64(&connIDGen, 1),
+		healthy:   true,
+		createdAt: time.Now(),
+		lastUsed:  time.Now(),
+	}
+}
+
+func (c *Conn) IsHealthy() bool  { return c.healthy }
+func (c *Conn) MarkUnhealthy()   { c.healthy = false }
+
+func (c *Conn) Do(query string) (string, error) {
+	if !c.healthy {
+		return "", fmt.Errorf("conn#%d is unhealthy", c.id)
+	}
+	c.lastUsed = time.Now()
+	return fmt.Sprintf("conn#%d: ok(%s)", c.id, query), nil
+}
+
+func (c *Conn) String() string {
+	return fmt.Sprintf("Conn#%d(healthy=%v)", c.id, c.healthy)
+}`;
+
+codes['cp-pool'] = `// pool.go — 连接池完整实现
+//
+// 设计要点：
+//  1. idle channel（带缓冲=maxSize）既是队列又是信号量
+//  2. total 用 atomic int64，避免为读一个数字加整把锁
+//  3. Get 逻辑（无锁 CAS 控制新建）：
+//       loop:
+//         非阻塞取 idle → 健康且未超时 → 返回
+//                       → 否则 total-- 丢弃，继续 loop
+//         idle 为空 → CAS total++ → 若成功则 newConn
+//                   → CAS 失败（已达上限）→ 阻塞 select 等 idle/closeCh/ctx
+//  4. Put 非阻塞 select + default，防止极端情况写满阻塞
+//  5. Close：atomic 标记 → close(closeCh) → inUseDone.Wait() → 排空 idle
+package connpool
+
+import (
+	"context"
+	"errors"
+	"sync"
+	"sync/atomic"
+	"time"
+)
+
+var (
+	ErrPoolClosed = errors.New("connection pool is closed")
+	ErrGetTimeout = errors.New("get connection timeout")
+)
+
+type Stats struct {
+	MaxSize int
+	Idle    int
+	InUse   int
+	Total   int
+}
+
+type Pool struct {
+	idle        chan *Conn
+	maxSize     int
+	idleTimeout time.Duration
+	total       int64      // atomic：当前总连接数（空闲 + 借出）
+	closed      int32      // atomic：0=open 1=closed
+	closeOnce   sync.Once
+	closeCh     chan struct{}
+	inUseDone   sync.WaitGroup // 每次 Get 成功时 Add(1)，Put 时 Done()
+}
+
+func NewPool(maxSize int, idleTimeout time.Duration) *Pool {
+	return &Pool{
+		idle:        make(chan *Conn, maxSize),
+		maxSize:     maxSize,
+		idleTimeout: idleTimeout,
+		closeCh:     make(chan struct{}),
+	}
+}
+
+// Get 从池中获取一个连接，支持 context 超时/取消。
+func (p *Pool) Get(ctx context.Context) (*Conn, error) {
+	for {
+		if p.isClosed() {
+			return nil, ErrPoolClosed
+		}
+
+		// 1. 先尝试从 idle 非阻塞取
+		select {
+		case c := <-p.idle:
+			if !c.IsHealthy() || p.isIdleTimeout(c) {
+				atomic.AddInt64(&p.total, -1)
+				continue
+			}
+			p.inUseDone.Add(1)
+			return c, nil
+		default:
+		}
+
+		// 2. idle 为空：尝试 CAS 新建
+		cur := atomic.LoadInt64(&p.total)
+		if cur < int64(p.maxSize) {
+			if atomic.CompareAndSwapInt64(&p.total, cur, cur+1) {
+				c := newConn()
+				p.inUseDone.Add(1)
+				return c, nil
+			}
+			continue // CAS 失败，重试
+		}
+
+		// 3. 已达上限，阻塞等待
+		select {
+		case c := <-p.idle:
+			if !c.IsHealthy() || p.isIdleTimeout(c) {
+				atomic.AddInt64(&p.total, -1)
+				continue
+			}
+			p.inUseDone.Add(1)
+			return c, nil
+		case <-p.closeCh:
+			return nil, ErrPoolClosed
+		case <-ctx.Done():
+			if ctx.Err() == context.DeadlineExceeded {
+				return nil, ErrGetTimeout
+			}
+			return nil, ctx.Err()
+		}
+	}
+}
+
+// Put 归还连接。不健康或超时的连接直接丢弃。
+func (p *Pool) Put(c *Conn) {
+	defer p.inUseDone.Done()
+
+	if p.isClosed() || !c.IsHealthy() || p.isIdleTimeout(c) {
+		atomic.AddInt64(&p.total, -1)
+		return
+	}
+
+	c.lastUsed = time.Now()
+
+	select {
+	case p.idle <- c:
+	default:
+		atomic.AddInt64(&p.total, -1)
+	}
+}
+
+// Close 关闭连接池，等待所有借出连接归还后清空 idle。
+func (p *Pool) Close() {
+	p.closeOnce.Do(func() {
+		atomic.StoreInt32(&p.closed, 1)
+		close(p.closeCh)
+		p.inUseDone.Wait()
+
+		for {
+			select {
+			case <-p.idle:
+			default:
+				return
+			}
+		}
+	})
+}
+
+func (p *Pool) Stats() Stats {
+	idle := len(p.idle)
+	total := int(atomic.LoadInt64(&p.total))
+	return Stats{
+		MaxSize: p.maxSize,
+		Idle:    idle,
+		InUse:   total - idle,
+		Total:   total,
+	}
+}
+
+func (p *Pool) isClosed() bool {
+	return atomic.LoadInt32(&p.closed) == 1
+}
+
+func (p *Pool) isIdleTimeout(c *Conn) bool {
+	if p.idleTimeout == 0 {
+		return false
+	}
+	return time.Since(c.lastUsed) > p.idleTimeout
+}`;
+
+codes['rl-rl'] = `// 答案版本：令牌桶 + 滑动窗口限流器完整实现
+package ratelimiter
+
+import (
+	"context"
+	"sync"
+	"time"
+)
+
+// ══════════════════════════════════════════════════════
+//  令牌桶
+// ══════════════════════════════════════════════════════
+
+// TokenBucket 是基于惰性计算的令牌桶。
+//
+// 设计要点：
+//   不使用后台 goroutine 定时补充，而是在每次 Allow/Wait 时
+//   根据"距上次补充经过的时间"惰性计算当前令牌数。
+type TokenBucket struct {
+	rate       float64   // 每秒补充令牌数
+	burst      float64   // 桶容量（上限）
+	tokens     float64   // 当前令牌数
+	lastRefill time.Time
+	mu         sync.Mutex
+}
+
+func NewTokenBucket(rate, burst float64) *TokenBucket {
+	return &TokenBucket{
+		rate:       rate,
+		burst:      burst,
+		tokens:     burst, // 初始满桶
+		lastRefill: time.Now(),
+	}
+}
+
+// refill 惰性补充令牌（调用方须持锁）。
+func (tb *TokenBucket) refill() {
+	now := time.Now()
+	elapsed := now.Sub(tb.lastRefill).Seconds()
+	tb.tokens += elapsed * tb.rate
+	if tb.tokens > tb.burst {
+		tb.tokens = tb.burst
+	}
+	tb.lastRefill = now
+}
+
+// Allow 非阻塞消耗 n 个令牌。
+func (tb *TokenBucket) Allow(n float64) bool {
+	tb.mu.Lock()
+	defer tb.mu.Unlock()
+
+	tb.refill()
+	if tb.tokens < n {
+		return false
+	}
+	tb.tokens -= n
+	return true
+}
+
+// Wait 阻塞等待直到可消耗 n 个令牌或 ctx 超时/取消。
+//
+// 等待时长 = (n - tokens) / rate
+// Wait 返回前再次 refill + 扣令牌，保证原子性。
+func (tb *TokenBucket) Wait(ctx context.Context, n float64) error {
+	tb.mu.Lock()
+	tb.refill()
+	need := n - tb.tokens
+	var waitDur time.Duration
+	if need > 0 {
+		waitDur = time.Duration(need/tb.rate*1e9) * time.Nanosecond
+	}
+	tb.mu.Unlock()
+
+	if waitDur <= 0 {
+		tb.mu.Lock()
+		tb.refill()
+		tb.tokens -= n
+		tb.mu.Unlock()
+		return nil
+	}
+
+	select {
+	case <-time.After(waitDur):
+		tb.mu.Lock()
+		tb.refill()
+		tb.tokens -= n
+		if tb.tokens < 0 {
+			tb.tokens = 0
+		}
+		tb.mu.Unlock()
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// ══════════════════════════════════════════════════════
+//  滑动窗口
+// ══════════════════════════════════════════════════════
+
+// SlidingWindow 是基于时间戳队列的滑动窗口限流器。
+//
+// 设计要点：
+//   维护一个升序时间戳切片，每次 Allow 时：
+//     1. 淘汰 now-windowSize 之前的记录
+//     2. 判断剩余数量是否 < limit
+//
+//   空间复杂度：O(limit)，超出 limit 的请求被拒绝，不会追加。
+type SlidingWindow struct {
+	limit      int
+	windowSize time.Duration
+	timestamps []time.Time
+	mu         sync.Mutex
+}
+
+func NewSlidingWindow(limit int, windowSize time.Duration) *SlidingWindow {
+	return &SlidingWindow{
+		limit:      limit,
+		windowSize: windowSize,
+		timestamps: make([]time.Time, 0, limit),
+	}
+}
+
+// Allow 检查并记录当前请求，返回是否放行。
+func (sw *SlidingWindow) Allow() bool {
+	sw.mu.Lock()
+	defer sw.mu.Unlock()
+
+	now := time.Now()
+	cutoff := now.Add(-sw.windowSize)
+
+	// 淘汰窗口外的旧时间戳（有序，找到第一个 >= cutoff 的位置）
+	i := 0
+	for i < len(sw.timestamps) && sw.timestamps[i].Before(cutoff) {
+		i++
+	}
+	sw.timestamps = sw.timestamps[i:]
+
+	if len(sw.timestamps) >= sw.limit {
+		return false
+	}
+	sw.timestamps = append(sw.timestamps, now)
+	return true
+}
+
+// Count 返回当前窗口内的有效请求数。
+func (sw *SlidingWindow) Count() int {
+	sw.mu.Lock()
+	defer sw.mu.Unlock()
+
+	now := time.Now()
+	cutoff := now.Add(-sw.windowSize)
+	i := 0
+	for i < len(sw.timestamps) && sw.timestamps[i].Before(cutoff) {
+		i++
+	}
+	sw.timestamps = sw.timestamps[i:]
+	return len(sw.timestamps)
+}`;
+
+// ── Populate code blocks ────────────────────────────────────────────────────
+const mapping = {
+  'code-tcp-main':  'tcp-main',
+  'code-lru-lru':   'lru-lru',
+  'code-sk-seckill':'sk-seckill',
+  'code-sk-handler':'sk-handler',
+  'code-wf-context':'wf-context',
+  'code-wf-router': 'wf-router',
+  'code-wf-engine': 'wf-engine',
+  'code-wp-pool':   'wp-pool',
+  'code-cp-conn':   'cp-conn',
+  'code-cp-pool':   'cp-pool',
+  'code-rl-rl':     'rl-rl',
+};
+
+Object.entries(mapping).forEach(([elemId, codeKey]) => {
+  const el = document.getElementById(elemId);
+  if (el && codes[codeKey]) {
+    el.textContent = codes[codeKey];
+  }
+});
+
+// Run highlight.js
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('.topic');
+  const navLinks = document.querySelectorAll('nav a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector('nav a[href="#' + entry.target.id + '"]');
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.2, rootMargin: '-60px 0px -60% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+});
+
+// Also run hljs immediately (before DOMContentLoaded if already loaded)
+if (document.readyState !== 'loading') {
+  document.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+}
+</script>
+
+</body>
+</html>
