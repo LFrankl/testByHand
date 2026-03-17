@@ -91,6 +91,71 @@
       border-left-color: var(--primary);
       color: var(--primary); font-weight: 600;
     }
+    .nav-sep { height: 1px; background: var(--border); margin: 10px 12px; }
+    nav a.nav-puzzle { font-size: 14px; }
+    nav a.nav-puzzle.active { color: #7C3AED; border-left-color: #7C3AED; background: #F5F3FF; }
+    nav a.nav-puzzle:hover { background: #EDE9FE; color: #7C3AED; }
+
+    /* puzzle cards */
+    .puzzle-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .puzzle-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+      background: #FAFAFA; cursor: pointer;
+      user-select: none;
+      gap: 12px;
+    }
+    .puzzle-card-header:hover { background: #F3F4F6; }
+    .puzzle-num {
+      font-size: 11px; font-weight: 700;
+      background: #E5E7EB; color: var(--text-muted);
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .puzzle-title {
+      font-size: 15px; font-weight: 600; flex: 1;
+    }
+    .puzzle-toggle {
+      font-size: 12px; color: var(--text-muted);
+      background: var(--border); border: none; border-radius: 4px;
+      padding: 3px 10px; cursor: pointer; white-space: nowrap;
+    }
+    .puzzle-body { padding: 20px 24px; border-top: 1px solid var(--border); }
+    .puzzle-section { margin-bottom: 16px; }
+    .puzzle-section:last-child { margin-bottom: 0; }
+    .puzzle-section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
+    }
+    .puzzle-section p, .puzzle-section li {
+      font-size: 14px; line-height: 1.75; color: #374151;
+    }
+    .puzzle-section ul, .puzzle-section ol { padding-left: 20px; }
+    .puzzle-answer {
+      background: #F0FDF4; border: 1px solid #BBF7D0;
+      border-radius: 6px; padding: 10px 16px;
+      font-size: 14px; font-weight: 600; color: #15803D;
+    }
+    .puzzle-insight {
+      background: #EFF6FF; border: 1px solid #BFDBFE;
+      border-radius: 6px; padding: 10px 16px;
+      font-size: 13px; color: #1D4ED8; line-height: 1.6;
+    }
+    .puzzle-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+    .puzzle-table th { background: #F1F5F9; padding: 6px 10px; text-align: left;
+      border: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+    .puzzle-table td { padding: 6px 10px; border: 1px solid var(--border); }
+    .hint-block {
+      display: none;
+    }
+    .hint-block.open { display: block; }
+
     nav a .num {
       font-size: 11px; font-weight: 700;
       background: var(--border); color: var(--text-muted);
@@ -272,6 +337,9 @@
     <a href="#ratelimiter"><span class="num">7</span>限流器</a>
     <a href="#mystring"><span class="num">8</span>String 类</a>
     <a href="#syncmap"><span class="num">9</span>sync.Map</a>
+    <div class="nav-sep"></div>
+    <div class="nav-label">智力题</div>
+    <a href="#puzzles" class="nav-puzzle">🧩 智力题集</a>
   </nav>
 
   <main>
@@ -644,6 +712,149 @@
           <tr><td>生产中用哪个？</td><td>单机限流优先令牌桶（<code>x/time/rate</code>）；分布式限流用 Redis INCR + expire（固定窗口）或 Redis sorted set（滑动窗口）。</td></tr>
         </table>
       </div>
+    </section>
+
+    <!-- ══════════════════════════════ Puzzles ══════════════════════════════ -->
+    <section class="topic" id="puzzles">
+      <div class="topic-header">
+        <h2>智力题集 <span class="tag" style="background:#EDE9FE;color:#7C3AED">脑筋急转弯</span></h2>
+        <p>面试中常见的逻辑推理题。点击展开查看题目、思路与答案。</p>
+      </div>
+
+      <!-- P1 过桥问题 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">1</span>
+          <span class="puzzle-title">过桥问题 — 4 人 1 手电</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>4 人夜晚过独木桥，每次最多 2 人，只有 1 只手电，必须有人持电筒才能过桥（不能扔回）。4 人单独过桥时间分别为 <strong>1、2、5、10 分钟</strong>，两人同行取较慢者。最少几分钟全部过桥？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>瓶颈是 5 和 10 这两个"慢人"，他们必须<strong>一起过桥</strong>，这样 10 分钟只被计一次。让最快的 1 和 2 专门"跑腿"送电筒回来。</p>
+            <table class="puzzle-table" style="margin-top:10px">
+              <tr><th>步骤</th><th>动作</th><th>耗时</th><th>此岸</th><th>对岸</th></tr>
+              <tr><td>①</td><td>1、2 同行过桥</td><td>2 min</td><td>5、10</td><td>1、2 🔦</td></tr>
+              <tr><td>②</td><td>1 返回</td><td>1 min</td><td>1、5、10 🔦</td><td>2</td></tr>
+              <tr><td>③</td><td>5、10 同行过桥</td><td>10 min</td><td>1 🔦</td><td>2、5、10</td></tr>
+              <tr><td>④</td><td>2 返回</td><td>2 min</td><td>1、2 🔦</td><td>5、10</td></tr>
+              <tr><td>⑤</td><td>1、2 同行过桥</td><td>2 min</td><td>—</td><td>全部 ✓</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：17 分钟</div>
+          <div class="puzzle-insight" style="margin-top:10px">误区：让 1 每次陪人过，耗时 1+10+1+5+2 = 19 min。关键是让两个慢人结伴，让两个快人轮流回送电筒。</div>
+        </div>
+      </div>
+
+      <!-- P2 称球 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">2</span>
+          <span class="puzzle-title">称球问题 — 12 球 3 次天平</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>12 个外观相同的球，其中 1 个是异常球（可能偏轻或偏重，未知），其余 11 个重量相同。只有一架无砝码天平，最多称 <strong>3 次</strong>，找出异常球并确定其轻重。</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>3 次天平有 3³ = 27 种结果，需区分 12×2 = 24 种情况，信息量够用但不能浪费。</p>
+            <ul style="margin-top:8px">
+              <li>分组：A(1–4)、B(5–8)、C(9–12)</li>
+              <li><strong>第 1 次</strong>：A vs B
+                <ul>
+                  <li>平衡 → 异常球在 C，再 2 次可定位（已有正常球对照）</li>
+                  <li>不平衡（设 A 重）→ 异常球要么在 A（偏重），要么在 B（偏轻）</li>
+                </ul>
+              </li>
+              <li><strong>第 2 次</strong>（A 重情况）：取 A 中 3 枚 + B 中 3 枚 vs C 中 3 枚 + 正常球 3 枚（混洗法），根据倾斜方向缩小候选</li>
+              <li><strong>第 3 次</strong>：在 3 球候选中 1 vs 1 确认</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：3 次必然找到异常球，并确定其轻重</div>
+          <div class="puzzle-insight" style="margin-top:10px">核心：不能单纯二分，因为每次天平结果有三种（左重/右重/平衡），需要设计"混洗"称量方案来同时利用三种结果。</div>
+        </div>
+      </div>
+
+      <!-- P3 囚犯找号码 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">3</span>
+          <span class="puzzle-title">百人囚犯找号码 — 循环策略</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>100 名囚犯编号 1–100。狱卒将 1–100 的号码随机打乱放入 100 个盒子（每盒一号码）。囚犯依次单独进入房间，每人<strong>最多打开 50 个盒子</strong>，找到自己编号才算成功。所有人成功则全部释放，一人失败则全部处决。囚犯可以事先商量策略，进房间后不能留记录也不能通信。有没有让全部人成功概率 &gt; 30% 的策略？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路：跟踪循环</div>
+            <p>100 个盒子和 100 个号码构成一个置换，任何置换都可分解为若干<strong>不相交的循环</strong>。</p>
+            <p style="margin-top:8px"><strong>策略</strong>：编号为 i 的囚犯，先开盒子 i，读出号码 j，再开盒子 j，如此沿循环追踪，直到找到号码 i 或已开 50 个。</p>
+            <p style="margin-top:8px">囚犯 i 必然在自己所在的循环内找到 i。失败当且仅当该循环长度 &gt; 50。</p>
+            <p style="margin-top:8px">P(失败) = P(存在长度 &gt; 50 的循环) ≈ Σ(1/k) for k=51..100 ≈ ln2 ≈ 0.693</p>
+          </div>
+          <div class="puzzle-answer">答案：循环策略成功率 ≈ 1 − ln2 ≈ 31.2%（随机策略 ≈ 0）</div>
+          <div class="puzzle-insight" style="margin-top:10px">反直觉之处：每个人各自独立决策，却能产生关联——因为他们共享同一个置换结构，循环策略把个人的成败与置换的全局性质绑定在一起。</div>
+        </div>
+      </div>
+
+      <!-- P4 两个鸡蛋 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">4</span>
+          <span class="puzzle-title">两个鸡蛋 100 层楼</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>100 层楼，2 个完全相同的鸡蛋。存在一个临界层 F（从 ≤F 层扔下不碎，从 &gt;F 层扔下会碎），碎了不能再用。<strong>最少需要几次</strong>能确定 F？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>设最坏情况最多扔 n 次。第一个蛋碎后，第二个蛋必须从上一安全层<strong>逐层向上</strong>检验（线性代价）。因此第一个蛋的投放间隔必须<strong>递减</strong>，使无论何时碎，总次数恰好等于 n。</p>
+            <p style="margin-top:8px">间隔设为 n, n−1, n−2, …, 1，最大覆盖层数 = n(n+1)/2</p>
+            <p>要覆盖 100 层：n(n+1)/2 ≥ 100 → n ≥ 14（14×15/2 = 105）</p>
+            <p style="margin-top:8px">第一个蛋投放楼层：<strong>14 → 27 → 39 → 50 → 60 → 69 → 77 → 84 → 90 → 95 → 99 → 100</strong>（间隔依次为 14,13,12…）</p>
+          </div>
+          <div class="puzzle-answer">答案：最少 14 次</div>
+          <div class="puzzle-insight" style="margin-top:10px">如果有无限个鸡蛋 → 二分查找 7 次。只有 1 个鸡蛋 → 只能从第 1 层逐层扔 100 次。2 个鸡蛋是在两者之间找平衡，答案是"递减间隔"策略。</div>
+        </div>
+      </div>
+
+      <!-- P5 帽子颜色 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">5</span>
+          <span class="puzzle-title">帽子颜色 — 公共知识与沉默推理</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>3 名聪明人围坐一圈，每人头戴一顶帽子（红或白，至少 1 顶红）。每人能看到其他两人的帽子，看不到自己的。裁判问谁能说出自己帽子颜色？三人同时举手但沉默片刻，随后三人同时说出正确颜色。三顶帽子各是什么颜色？他们如何推理的？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <ul>
+              <li><strong>若 2 白 1 红</strong>：红帽人看到 2 顶白，立刻知道自己是红 → 不会沉默。但三人都沉默，矛盾。排除。</li>
+              <li><strong>若 1 白 2 红</strong>：白帽人看到 2 顶红，知道自己可能是白或红；两个红帽人各看到 1 红 1 白，等待白帽人先说（如果我是白帽，他应该立刻答出）。沉默片刻后，红帽人意识到白帽人没有立刻答出，说明没有 2 白 1 红的情况，所以自己是红。白帽人也通过同样推理意识到自己是白。→ 可以，但三人会在同一时刻答出吗？</li>
+              <li><strong>若 3 红</strong>：每人看到 2 顶红，等待"如果我是白帽，对方应在片刻后答出"——对方也在等，无人答出。等待一个推理轮次后，每人意识到自己也是红帽。三人同时答出。✓</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：三顶均为红帽</div>
+          <div class="puzzle-insight" style="margin-top:10px"><strong>沉默是信息</strong>：沉默传递了"我无法立刻确定"，排除了更简单的情况。这是"公共知识（Common Knowledge）"的经典应用——每个人不仅要推理，还要推理"其他人在推理什么"。</div>
+        </div>
+      </div>
+
     </section>
 
     <!-- ══════════════════════════════ 9. sync.Map ══════════════════════════════ -->
@@ -2712,6 +2923,14 @@ Object.entries(mapping).forEach(([elemId, codeKey]) => {
   }
 });
 
+// ── Puzzle toggle ─────────────────────────────────────────────────────────
+function togglePuzzle(header) {
+  const body = header.nextElementSibling;
+  const btn  = header.querySelector('.puzzle-toggle');
+  const open = body.classList.toggle('open');
+  btn.textContent = open ? '收起' : '展开';
+}
+
 // ── Page switching ─────────────────────────────────────────────────────────
 function showTopic(id) {
   document.querySelectorAll('.topic').forEach(s => s.classList.remove('active'));
@@ -2723,7 +2942,10 @@ function showTopic(id) {
     main.scrollTop = 0;
   }
   const link = document.querySelector('nav a[href="#' + id + '"]');
-  if (link) link.classList.add('active');
+  if (link) {
+    link.classList.add('active');
+    // puzzle link has its own color via .nav-puzzle.active CSS
+  }
 
   // highlight.js: only process newly visible blocks that haven't been highlighted yet
   if (section) {
