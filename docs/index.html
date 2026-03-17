@@ -257,7 +257,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">8 题</span>
+  <span class="badge">9 题</span>
 </header>
 
 <div class="layout">
@@ -271,6 +271,7 @@
     <a href="#connpool"><span class="num">6</span>连接池</a>
     <a href="#ratelimiter"><span class="num">7</span>限流器</a>
     <a href="#mystring"><span class="num">8</span>String 类</a>
+    <a href="#syncmap"><span class="num">9</span>sync.Map</a>
   </nav>
 
   <main>
@@ -641,6 +642,56 @@
           <tr><td>滑动窗口的时间复杂度？</td><td>O(k)，k 为窗口内请求数。淘汰过期记录是线性扫描；若用二分搜索可优化到 O(log k)，但窗口通常不大，线性已足够。</td></tr>
           <tr><td>为何滑动窗口空间是 O(limit)？</td><td>超过 limit 的请求被拒绝不追加，时间戳切片最多 limit 个元素；旧时间戳被淘汰后切片缩减，内存稳定。</td></tr>
           <tr><td>生产中用哪个？</td><td>单机限流优先令牌桶（<code>x/time/rate</code>）；分布式限流用 Redis INCR + expire（固定窗口）或 Redis sorted set（滑动窗口）。</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ 9. sync.Map ══════════════════════════════ -->
+    <section class="topic" id="syncmap">
+      <div class="topic-header">
+        <h2>sync.Map <span class="tag">并发 · 原子操作</span></h2>
+        <p>从零实现 sync.Map：两张表 + miss 提升机制 + expunged 哨兵，彻底理解标准库设计。</p>
+      </div>
+
+      <div class="design-card">
+        <h3>设计要点</h3>
+        <ul>
+          <li><strong>两张表</strong>：<code>read</code>（atomic.Value，无锁读）+ <code>dirty</code>（mutex 保护，全量数据）</li>
+          <li><strong>fast path</strong>：Load 先查 read，命中则无需加锁，适合读多写少场景</li>
+          <li><strong>miss 提升</strong>：每次 read 未命中计 misses；当 <code>misses &gt;= len(dirty)</code> 时将 dirty O(1) 提升为 read，之后读再次走 fast path</li>
+          <li><strong>expunged 哨兵</strong>：<code>dirtyLocked</code> 重建 dirty 时，将 read 中 p==nil（软删除）的 entry 标记为 expunged，不拷入 dirty；后续对该 key 的 Store 通过 <code>unexpungeLocked</code> 恢复</li>
+          <li>entry.p 三态：正常指针（存在）/ nil（软删除）/ expunged（从 read 删除且不在 dirty）</li>
+          <li>所有 entry 方法用 CAS（无锁）；只有 dirty 操作需要 mutex</li>
+        </ul>
+      </div>
+
+      <div class="file-tabs">
+        <div class="file-tabs-header">
+          <button class="file-tab-btn active" onclick="switchTab(this,'sm-sm-pane')">syncmap.go</button>
+        </div>
+        <div class="file-tab-pane active" id="sm-sm-pane">
+          <div class="code-wrap">
+            <div class="code-filename">syncmap/answer/syncmap.go</div>
+            <pre><code class="language-go" id="code-sm-sm"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>为何需要两张表</strong>：普通 <code>map + RWMutex</code> 在高并发读时，多个 goroutine 争抢 RLock 仍有竞争开销。sync.Map 通过 <code>atomic.Value</code> 存储 read 快照，读操作完全无锁——只有 read 未命中时才加锁查 dirty。<br><br>
+            <strong>expunged 为何必要</strong>：考虑以下序列：① Store(k,1) → k 在 read；② 触发 dirtyLocked 重建 dirty；③ Delete(k) → read 中 entry.p=nil；④ Store(k,2)。步骤④时，若不区分 nil 和 expunged，就无法判断该 entry 是否需要重新加入 dirty。expunged 明确表示"dirty 中没有我"，Store 发现后通过 unexpungeLocked 把 entry 重新插回 dirty。<br><br>
+            <strong>miss 提升时机</strong>：每次走 dirty 路径都累计 misses。当 <code>misses &gt;= len(dirty)</code> 时，说明 dirty 的每个 key 都被查过了，未来大概率还会被查，此时将 dirty 整体替换 read（仅交换指针，O(1)），reset dirty=nil，misses=0。<br><br>
+            <strong>double-check 模式</strong>：Load/Store 的 slow path 加锁后需要重新 <code>loadRead()</code>——因为加锁等待期间另一个 goroutine 可能已完成 dirty 提升，若不重新检查会遗漏 fast path 机会或操作过时的 dirty 引用。
+          </div>
+        </div>
+      </div>
+
+      <div class="key-points">
+        <h3>核心考察点</h3>
+        <table>
+          <tr><th>问题</th><th>答案要点</th></tr>
+          <tr><td>sync.Map 适合哪些场景？不适合哪些？</td><td>适合：读多写少（缓存）、不同 goroutine 操作不相交的 key。不适合：频繁写同一批 key——dirty 反复重建，miss 提升开销大，不如 <code>map + RWMutex</code>。</td></tr>
+          <tr><td>read 和 dirty 的关系？</td><td>dirty 是全量数据（包含 read 中没有的新 key）；read 是 dirty 的子集快照。提升后 dirty=nil，read 成为全量。二者共享同一批 <code>*entry</code> 指针，写 entry 时无需同步两张表。</td></tr>
+          <tr><td>expunged 和 nil 的区别？</td><td>nil：软删除，dirty 中已无此 key，但 read 残留。expunged：dirty 重建时标记，表示"dirty 中从未有过我"，后续 Store 需通过 <code>unexpungeLocked</code> 恢复。没有 expunged 就无法区分"删除前未入 dirty"和"删除后已从 dirty 移除"。</td></tr>
+          <tr><td>为何 Load 里要 double-check？</td><td>获取 mu 前 read 快照可能已过期（另一个 goroutine 完成了提升），不 double-check 会在旧的 dirty 上操作，甚至 dirty==nil 时 panic。</td></tr>
+          <tr><td>Range 为何不会死锁？</td><td>Range 先（短暂加锁）将 dirty 提升为 read，然后在无锁下遍历 read 快照。f 内调用 Load/Store/Delete 可安全加锁，因为 Range 自己已释放锁。</td></tr>
         </table>
       </div>
     </section>
@@ -2212,6 +2263,215 @@ func (sw *SlidingWindow) Count() int {
 	return len(sw.timestamps)
 }`;
 
+codes['sm-sm'] = `// 答案版本：sync.Map 完整实现
+//
+// 核心设计——两张表 + miss 计数：
+//   read  (atomic.Value) — 无锁读（fast path）
+//   dirty (map + Mutex)  — 有锁写（slow path），包含 read 中没有的新 key
+//   misses >= len(dirty) → dirty 整体提升为 read（O(1)）
+//
+//   entry.p 三种状态：
+//     正常指针  — 条目存在
+//     nil       — 已逻辑删除（dirty 中被 delete）
+//     expunged  — 已从 read 删除且 dirty 中不存在（由 dirtyLocked 标记）
+package syncmap
+
+import (
+	"sync"
+	"sync/atomic"
+)
+
+var expunged = new(any)
+
+// entry 用原子指针封装值，支持无锁并发读。
+type entry struct {
+	p atomic.Pointer[any]
+}
+
+func newEntry(v any) *entry { e := &entry{}; e.p.Store(&v); return e }
+
+func (e *entry) load() (any, bool) {
+	p := e.p.Load()
+	if p == nil || p == expunged { return nil, false }
+	return *p, true
+}
+
+// tryStore：CAS 写入新值；p==expunged 时拒绝（该 key 不在 dirty，须走加锁路径）。
+func (e *entry) tryStore(v *any) bool {
+	for {
+		p := e.p.Load()
+		if p == expunged { return false }
+		if e.p.CompareAndSwap(p, v) { return true }
+	}
+}
+
+// unexpungeLocked：CAS expunged→nil，表示"需重新加入 dirty"（持锁调用）。
+func (e *entry) unexpungeLocked() bool {
+	return e.p.CompareAndSwap(expunged, nil)
+}
+
+// tryExpungeLocked：CAS nil→expunged，在 dirtyLocked 中标记软删除条目（持锁调用）。
+func (e *entry) tryExpungeLocked() bool {
+	p := e.p.Load()
+	for p == nil {
+		if e.p.CompareAndSwap(nil, expunged) { return true }
+		p = e.p.Load()
+	}
+	return p == expunged
+}
+
+// delete：逻辑删除，CAS 当前值→nil。已删除则返回 (nil, false)。
+func (e *entry) delete() (any, bool) {
+	for {
+		p := e.p.Load()
+		if p == nil || p == expunged { return nil, false }
+		if e.p.CompareAndSwap(p, nil) { return *p, true }
+	}
+}
+
+type readOnly struct {
+	m       map[any]*entry
+	amended bool // dirty 中有 read 里没有的 key
+}
+
+// Map 是并发安全的键值映射，针对"读多写少"场景优化。
+type Map struct {
+	mu     sync.Mutex
+	read   atomic.Value // 存储 readOnly
+	dirty  map[any]*entry
+	misses int
+}
+
+func (m *Map) loadRead() readOnly {
+	if v := m.read.Load(); v != nil { return v.(readOnly) }
+	return readOnly{}
+}
+
+// Load：fast path 查 read（无锁）；miss 且 amended=true 则加锁查 dirty + missLocked。
+func (m *Map) Load(key any) (value any, ok bool) {
+	read := m.loadRead()
+	e, ok := read.m[key]
+	if !ok && read.amended {
+		m.mu.Lock()
+		read = m.loadRead() // double-check
+		e, ok = read.m[key]
+		if !ok && read.amended {
+			e, ok = m.dirty[key]
+			m.missLocked()
+		}
+		m.mu.Unlock()
+	}
+	if !ok { return nil, false }
+	return e.load()
+}
+
+// Store：fast path CAS 更新 read 中已有 key；slow path 加锁处理三种情况。
+func (m *Map) Store(key, value any) {
+	read := m.loadRead()
+	if e, ok := read.m[key]; ok && e.tryStore(&value) { return }
+
+	m.mu.Lock()
+	read = m.loadRead()
+	if e, ok := read.m[key]; ok {
+		if e.unexpungeLocked() { m.dirty[key] = e } // 从 expunged 恢复，重新入 dirty
+		e.p.Store(&value)
+	} else if e, ok := m.dirty[key]; ok {
+		e.p.Store(&value)
+	} else {
+		if !read.amended {
+			m.dirtyLocked()
+			m.read.Store(readOnly{m: read.m, amended: true})
+		}
+		m.dirty[key] = newEntry(value)
+	}
+	m.mu.Unlock()
+}
+
+// LoadOrStore：存在则返回已有值（loaded=true），否则存储并返回（loaded=false）。
+func (m *Map) LoadOrStore(key, value any) (actual any, loaded bool) {
+	read := m.loadRead()
+	if e, ok := read.m[key]; ok {
+		if v, ok := e.load(); ok { return v, true }
+	}
+	m.mu.Lock()
+	read = m.loadRead()
+	if e, ok := read.m[key]; ok {
+		if e.unexpungeLocked() { m.dirty[key] = e }
+		if v, ok := e.load(); ok { m.mu.Unlock(); return v, true }
+		e.p.Store(&value)
+	} else if e, ok := m.dirty[key]; ok {
+		if v, ok := e.load(); ok { m.missLocked(); m.mu.Unlock(); return v, true }
+		e.p.Store(&value)
+		m.missLocked()
+	} else {
+		if !read.amended { m.dirtyLocked(); m.read.Store(readOnly{m: read.m, amended: true}) }
+		m.dirty[key] = newEntry(value)
+	}
+	m.mu.Unlock()
+	return value, false
+}
+
+// Delete / LoadAndDelete：read 命中则 e.delete() 置 nil；dirty 命中则从 dirty 删除。
+func (m *Map) Delete(key any) { m.LoadAndDelete(key) }
+
+func (m *Map) LoadAndDelete(key any) (value any, loaded bool) {
+	read := m.loadRead()
+	e, ok := read.m[key]
+	if !ok && read.amended {
+		m.mu.Lock()
+		read = m.loadRead()
+		e, ok = read.m[key]
+		if !ok && read.amended {
+			e, ok = m.dirty[key]
+			delete(m.dirty, key)
+			m.missLocked()
+		}
+		m.mu.Unlock()
+	}
+	if ok { return e.delete() }
+	return nil, false
+}
+
+// Range：amended=true 时先提升 dirty→read，再无锁遍历 read 快照。
+func (m *Map) Range(f func(key, value any) bool) {
+	read := m.loadRead()
+	if read.amended {
+		m.mu.Lock()
+		read = m.loadRead()
+		if read.amended {
+			read = readOnly{m: m.dirty}
+			m.read.Store(read)
+			m.dirty = nil
+			m.misses = 0
+		}
+		m.mu.Unlock()
+	}
+	for k, e := range read.m {
+		v, ok := e.load()
+		if !ok { continue }
+		if !f(k, v) { break }
+	}
+}
+
+// missLocked：累计 miss；misses >= len(dirty) 时将 dirty O(1) 提升为 read。
+func (m *Map) missLocked() {
+	m.misses++
+	if m.misses < len(m.dirty) { return }
+	m.read.Store(readOnly{m: m.dirty})
+	m.dirty = nil
+	m.misses = 0
+}
+
+// dirtyLocked：初始化 dirty，拷贝 read 中存活的 entry，将软删除 entry 标为 expunged。
+func (m *Map) dirtyLocked() {
+	if m.dirty != nil { return }
+	read := m.loadRead()
+	m.dirty = make(map[any]*entry, len(read.m))
+	for k, e := range read.m {
+		if !e.tryExpungeLocked() { m.dirty[k] = e }
+	}
+}`;
+
 codes['ms-ms'] = `// 答案版本：自定义 String 类完整实现
 //
 // 设计目标：
@@ -2442,6 +2702,7 @@ const mapping = {
   'code-cp-pool':   'cp-pool',
   'code-rl-rl':     'rl-rl',
   'code-ms-ms':     'ms-ms',
+  'code-sm-sm':     'sm-sm',
 };
 
 Object.entries(mapping).forEach(([elemId, codeKey]) => {
