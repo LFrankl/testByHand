@@ -257,7 +257,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">7 题</span>
+  <span class="badge">8 题</span>
 </header>
 
 <div class="layout">
@@ -270,6 +270,7 @@
     <a href="#workerpool"><span class="num">5</span>工作池</a>
     <a href="#connpool"><span class="num">6</span>连接池</a>
     <a href="#ratelimiter"><span class="num">7</span>限流器</a>
+    <a href="#mystring"><span class="num">8</span>String 类</a>
   </nav>
 
   <main>
@@ -640,6 +641,55 @@
           <tr><td>滑动窗口的时间复杂度？</td><td>O(k)，k 为窗口内请求数。淘汰过期记录是线性扫描；若用二分搜索可优化到 O(log k)，但窗口通常不大，线性已足够。</td></tr>
           <tr><td>为何滑动窗口空间是 O(limit)？</td><td>超过 limit 的请求被拒绝不追加，时间戳切片最多 limit 个元素；旧时间戳被淘汰后切片缩减，内存稳定。</td></tr>
           <tr><td>生产中用哪个？</td><td>单机限流优先令牌桶（<code>x/time/rate</code>）；分布式限流用 Redis INCR + expire（固定窗口）或 Redis sorted set（滑动窗口）。</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ 8. MyString ══════════════════════════════ -->
+    <section class="topic" id="mystring">
+      <div class="topic-header">
+        <h2>String 类 <span class="tag">字符串 · 算法</span></h2>
+        <p>实现不可变 MyString 类型：KMP 搜索、UTF-8 感知反转、高效 Builder 拼接。</p>
+      </div>
+
+      <div class="design-card">
+        <h3>设计要点</h3>
+        <ul>
+          <li><strong>不可变性</strong>：内部 <code>[]byte</code>，所有方法返回新实例；<code>Bytes()</code> 做防御性拷贝，不暴露内部引用</li>
+          <li><strong>KMP 搜索</strong>：<code>Index/Contains</code> 时间复杂度 O(n+m)；核心是 failure function（部分匹配表），失配时回退 pattern 指针而非文本指针</li>
+          <li><strong>UTF-8 感知</strong>：<code>Reverse</code>（字节反转，ASCII 安全）vs <code>ReverseRunes</code>（先解码 <code>[]rune</code>，交换后重新编码）</li>
+          <li><strong>Builder 模式</strong>：用 <code>append([]byte)</code> 摊销内存分配，O(n) 拼接；相比 <code>+=</code> 的 O(n²) 有本质改进</li>
+          <li>链式调用：<code>b.Write(...).WriteString(...).WriteByte(...)</code>，每个方法返回 <code>*Builder</code></li>
+        </ul>
+      </div>
+
+      <div class="file-tabs">
+        <div class="file-tabs-header">
+          <button class="file-tab-btn active" onclick="switchTab(this,'ms-ms-pane')">mystring.go</button>
+        </div>
+        <div class="file-tab-pane active" id="ms-ms-pane">
+          <div class="code-wrap">
+            <div class="code-filename">mystring/answer/mystring.go</div>
+            <pre><code class="language-go" id="code-ms-ms"></code></pre>
+          </div>
+          <div class="commentary">
+            <strong>不可变性实现</strong>：<code>MyString.b</code> 是未导出字段，外部无法访问。<code>Bytes()</code> 必须返回拷贝——若直接返回 <code>s.b</code>，调用方持有切片引用后修改，将静默破坏内部状态。<code>Concat/Slice</code> 同理，均创建新的底层数组。<br><br>
+            <strong>KMP failure function</strong>：<code>f[i]</code> = <code>pattern[0..i]</code> 最长公共真前缀后缀的长度。例如 <code>"ababc"</code> → <code>[0,0,1,2,0]</code>。搜索时失配发生在位置 j，说明 <code>pattern[0..j-1]</code> 已匹配，利用 <code>f[j-1]</code> 跳过不可能成功的起点，文本指针 i 永不回退。<br><br>
+            <strong>字节反转 vs rune 反转</strong>：对 <code>"你好"</code>（UTF-8 编码为 <code>e4 bd a0 e5 a5 bd</code>）直接字节反转得到 <code>bd a5 e5 a0 bd e4</code>，是无效 UTF-8。<code>ReverseRunes</code> 先 <code>[]rune("你好")</code> 解码为 <code>[0x4F60, 0x597D]</code>，交换后重新编码，结果正确。<br><br>
+            <strong>Builder 原理</strong>：<code>append</code> 在容量不足时按 2x 扩容，n 次 append 的总分配次数是 O(log n)，总复制字节数是 O(n)。而 <code>s += t</code> 每次都分配新数组并复制全部已有内容，n 次累计 O(n²)。
+          </div>
+        </div>
+      </div>
+
+      <div class="key-points">
+        <h3>核心考察点</h3>
+        <table>
+          <tr><th>问题</th><th>答案要点</th></tr>
+          <tr><td>KMP 比暴力算法快在哪里？</td><td>暴力每次失配都回退文本指针，最坏 O(n*m)。KMP 利用 failure function 跳过已知不匹配的位置，文本指针只前进不回退，O(n+m)。</td></tr>
+          <tr><td>failure function 的含义？</td><td><code>f[i]</code> = pattern[0..i] 中，最长的"既是真前缀又是真后缀"的字符串长度。失配时利用它跳转：<code>j = f[j-1]</code>，表示已匹配的部分中有一个更短的公共前后缀可以继续尝试。</td></tr>
+          <tr><td>为何 <code>string +=</code> 是 O(n²)？</td><td>Go string 不可变，<code>+=</code> 每次创建新字符串并复制全部内容。n 次操作拷贝 1+2+...+n = O(n²) 字节。</td></tr>
+          <tr><td>Reverse 和 ReverseRunes 的区别？</td><td>Reverse 直接逐字节倒序，对多字节 UTF-8 字符会产生非法序列。ReverseRunes 先解码为 <code>[]rune</code>，交换的是完整字符，结果始终是合法 UTF-8。</td></tr>
+          <tr><td>如何保证 Builder.Build() 的不可变性？</td><td>Build() 返回前做防御性拷贝（<code>make + copy</code>）。若直接返回 <code>MyString{b: b.buf}</code>，后续 Reset/Write 会修改 buf，导致已返回的 MyString 内容被篡改。</td></tr>
         </table>
       </div>
     </section>
@@ -2162,6 +2212,222 @@ func (sw *SlidingWindow) Count() int {
 	return len(sw.timestamps)
 }`;
 
+codes['ms-ms'] = `// 答案版本：自定义 String 类完整实现
+//
+// 设计目标：
+//   - 不可变（immutable）：所有方法返回新实例，内部字节不可被外部修改
+//   - UTF-8 感知：区分字节操作和 rune 操作
+//   - 高效拼接：Builder 用 []byte 避免 += 的 O(n²) 问题
+//   - KMP 搜索：Index/Contains 时间复杂度 O(n+m)
+package mystring
+
+import "unicode/utf8"
+
+// MyString 是不可变字符串类型，内部以 []byte 存储。
+// 所有返回字符串的方法均创建新实例，原值不变。
+type MyString struct {
+	b []byte
+}
+
+func New(s string) MyString          { return MyString{b: []byte(s)} }
+func (s MyString) String() string    { return string(s.b) }
+func (s MyString) Len() int          { return len(s.b) }
+func (s MyString) RuneLen() int      { return utf8.RuneCount(s.b) }
+func (s MyString) Empty() bool       { return len(s.b) == 0 }
+
+// Bytes 返回内部字节的防御性拷贝。
+// 直接返回 s.b 会破坏不可变性——调用方修改切片会影响内部状态。
+func (s MyString) Bytes() []byte {
+	cp := make([]byte, len(s.b))
+	copy(cp, s.b)
+	return cp
+}
+
+func (s MyString) Equal(other MyString) bool {
+	if len(s.b) != len(other.b) {
+		return false
+	}
+	for i := range s.b {
+		if s.b[i] != other.b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// Concat 拼接，预分配 len(s)+len(other) 大小，一次写入，避免二次分配。
+func (s MyString) Concat(other MyString) MyString {
+	buf := make([]byte, len(s.b)+len(other.b))
+	copy(buf, s.b)
+	copy(buf[len(s.b):], other.b)
+	return MyString{b: buf}
+}
+
+// Slice 返回 [start, end) 子串（字节索引），做拷贝保证不可变性。
+func (s MyString) Slice(start, end int) MyString {
+	if start < 0 { start = 0 }
+	if end > len(s.b) { end = len(s.b) }
+	if start >= end { return MyString{} }
+	cp := make([]byte, end-start)
+	copy(cp, s.b[start:end])
+	return MyString{b: cp}
+}
+
+// ── KMP 搜索 ──────────────────────────────────────────────────────────────────
+
+// Index 使用 KMP 算法返回 sub 首次出现的字节偏移，未找到返回 -1。
+// 时间复杂度 O(n+m)，相比暴力 O(n*m) 的改进：
+//   失配时回退 pattern 指针 j = f[j-1]，文本指针 i 永不回退。
+func (s MyString) Index(sub MyString) int {
+	n, m := len(s.b), len(sub.b)
+	if m == 0 { return 0 }
+	if m > n  { return -1 }
+
+	f := buildFailure(sub.b)
+	j := 0
+	for i := 0; i < n; i++ {
+		for j > 0 && s.b[i] != sub.b[j] {
+			j = f[j-1] // 利用 failure function 回退，不回退 i
+		}
+		if s.b[i] == sub.b[j] {
+			j++
+		}
+		if j == m {
+			return i - m + 1
+		}
+	}
+	return -1
+}
+
+// buildFailure 构建 KMP failure function（部分匹配表）。
+// f[i] = pattern[0..i] 最长公共真前缀后缀的长度。
+// 示例："ababc" → [0,0,1,2,0]
+func buildFailure(p []byte) []int {
+	m := len(p)
+	f := make([]int, m)
+	k := 0
+	for i := 1; i < m; i++ {
+		for k > 0 && p[i] != p[k] {
+			k = f[k-1]
+		}
+		if p[i] == p[k] {
+			k++
+		}
+		f[i] = k
+	}
+	return f
+}
+
+func (s MyString) Contains(sub MyString) bool { return s.Index(sub) >= 0 }
+
+// ── 变换操作 ──────────────────────────────────────────────────────────────────
+
+// Reverse 按字节反转（适合纯 ASCII）。
+// 陷阱：对多字节 UTF-8 字符直接字节反转会产生非法序列，请用 ReverseRunes。
+func (s MyString) Reverse() MyString {
+	n := len(s.b)
+	buf := make([]byte, n)
+	for i, c := range s.b {
+		buf[n-1-i] = c
+	}
+	return MyString{b: buf}
+}
+
+// ReverseRunes 按 Unicode rune 反转（UTF-8 安全）。
+// 先 []rune 解码，双指针交换，再 []byte 重新编码。
+func (s MyString) ReverseRunes() MyString {
+	runes := []rune(string(s.b))
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return MyString{b: []byte(string(runes))}
+}
+
+// ToUpper/ToLower：ASCII 大小写差值为 32（'a'-'A'==32）。
+func (s MyString) ToUpper() MyString {
+	buf := make([]byte, len(s.b))
+	for i, c := range s.b {
+		if c >= 'a' && c <= 'z' { buf[i] = c - 32 } else { buf[i] = c }
+	}
+	return MyString{b: buf}
+}
+
+func (s MyString) ToLower() MyString {
+	buf := make([]byte, len(s.b))
+	for i, c := range s.b {
+		if c >= 'A' && c <= 'Z' { buf[i] = c + 32 } else { buf[i] = c }
+	}
+	return MyString{b: buf}
+}
+
+// TrimSpace 去除首尾空白（双指针从两端向中间收缩）。
+func (s MyString) TrimSpace() MyString {
+	l, r := 0, len(s.b)-1
+	for l <= r && isSpace(s.b[l]) { l++ }
+	for r >= l && isSpace(s.b[r]) { r-- }
+	return s.Slice(l, r+1)
+}
+
+func isSpace(c byte) bool { return c == ' ' || c == '\\t' || c == '\\n' || c == '\\r' }
+
+// Split 按 sep 分割，行为与 strings.Split 一致。
+func (s MyString) Split(sep MyString) []MyString {
+	if sep.Len() == 0 {
+		result := make([]MyString, len(s.b))
+		for i, c := range s.b { result[i] = MyString{b: []byte{c}} }
+		return result
+	}
+	var result []MyString
+	start := 0
+	for {
+		idx := MyString{b: s.b[start:]}.Index(sep)
+		if idx < 0 { break }
+		result = append(result, s.Slice(start, start+idx))
+		start += idx + sep.Len()
+	}
+	result = append(result, s.Slice(start, len(s.b)))
+	return result
+}
+
+// Replace 将前 n 个 old 替换为 newStr（n<0 全部替换），用 Builder 累积避免 O(n²)。
+func (s MyString) Replace(old, newStr MyString, n int) MyString {
+	if n == 0 || old.Equal(newStr) { return s }
+	var b Builder
+	src := s.b
+	replaced := 0
+	for {
+		if n >= 0 && replaced >= n { break }
+		idx := MyString{b: src}.Index(old)
+		if idx < 0 { break }
+		b.writeRaw(src[:idx])
+		b.writeRaw(newStr.b)
+		src = src[idx+old.Len():]
+		replaced++
+	}
+	b.writeRaw(src)
+	return b.Build()
+}
+
+// ── Builder ───────────────────────────────────────────────────────────────────
+
+// Builder 使用 []byte 高效拼接字符串，支持链式调用。
+// append 摊销分配 O(n)；string += 每次复制 O(n²)。
+type Builder struct{ buf []byte }
+
+func (b *Builder) Write(s MyString) *Builder      { b.buf = append(b.buf, s.b...); return b }
+func (b *Builder) WriteString(s string) *Builder  { b.buf = append(b.buf, s...); return b }
+func (b *Builder) WriteByte(c byte) *Builder      { b.buf = append(b.buf, c); return b }
+func (b *Builder) writeRaw(p []byte)              { b.buf = append(b.buf, p...) }
+func (b *Builder) Len() int                       { return len(b.buf) }
+func (b *Builder) Reset()                         { b.buf = b.buf[:0] }
+
+// Build 返回当前内容的 MyString（防御性拷贝），不清空 Builder。
+func (b *Builder) Build() MyString {
+	cp := make([]byte, len(b.buf))
+	copy(cp, b.buf)
+	return MyString{b: cp}
+}`;
+
 // ── Populate code blocks ────────────────────────────────────────────────────
 const mapping = {
   'code-tcp-main':  'tcp-main',
@@ -2175,6 +2441,7 @@ const mapping = {
   'code-cp-conn':   'cp-conn',
   'code-cp-pool':   'cp-pool',
   'code-rl-rl':     'rl-rl',
+  'code-ms-ms':     'ms-ms',
 };
 
 Object.entries(mapping).forEach(([elemId, codeKey]) => {
