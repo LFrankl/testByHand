@@ -1076,6 +1076,170 @@
         </div>
       </div>
 
+      <!-- P24 8球找重球 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">24</span>
+          <span class="puzzle-title">8个小球找重球 — 2次天平</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>8 个外观相同的小球，其中 1 个比其余 7 个<strong>稍重</strong>，其余重量完全相同。用无砝码天平，最少称几次能找出重球？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>每次称量有三种结果（左重/右重/平衡），可将候选范围缩减为 1/3。</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>轮次</th><th>操作</th><th>结论</th></tr>
+              <tr><td>第 1 次</td><td>左盘 3 个 vs 右盘 3 个，剩 2 个不放</td><td>哪边重 → 重球在那边；平衡 → 重球在剩余 2 个中</td></tr>
+              <tr><td>第 2 次（情况一）</td><td>候选 3 个中：1 vs 1，剩 1 个</td><td>哪边重即为重球；平衡则剩余那个是重球</td></tr>
+              <tr><td>第 2 次（情况二）</td><td>候选 2 个：1 vs 1</td><td>重的那个即为重球</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：2 次</div>
+          <div class="puzzle-insight" style="margin-top:10px">推广：3ⁿ 个球中找 1 个重球最少需要 n 次。8 ≤ 3² = 9，2 次足够。注意：本题已知重球<strong>偏重</strong>，若不知轻重则是 12 球 3 次问题（见题 #2）。</div>
+        </div>
+      </div>
+
+      <!-- P25 10箱假药 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">25</span>
+          <span class="puzzle-title">10箱假药称一次 — 编号取瓶</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>有 <strong>10 箱药</strong>，每箱 10 瓶，每瓶正常重 <strong>10 克</strong>。其中有一箱全是假药，每瓶轻 <strong>1 克</strong>（即 9 克）。只能用电子秤称<strong>一次</strong>，如何找出假药箱？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>让每箱取出的瓶数不同，使总重差值直接指向假药箱编号。</p>
+            <ul style="margin-top:8px">
+              <li>第 1 箱取 <strong>1 瓶</strong>，第 2 箱取 <strong>2 瓶</strong>，……，第 10 箱取 <strong>10 瓶</strong></li>
+              <li>共取 1+2+…+10 = <strong>55 瓶</strong>，若全真药总重 = 550 克</li>
+              <li>实际称出 W 克，差值 <strong>550 − W = 假药箱编号</strong></li>
+            </ul>
+            <p style="margin-top:8px">例：W = 547 克 → 差值 = 3 → <strong>第 3 箱</strong>是假药箱。</p>
+          </div>
+          <div class="puzzle-answer">答案：只称一次，差值即为假药箱编号</div>
+          <div class="puzzle-insight" style="margin-top:10px">核心思想：用<strong>编号 = 取瓶数</strong>将"哪箱"信息编码进重量差值中，一次称量读出所有信息。</div>
+        </div>
+      </div>
+
+      <!-- P26 沙漏计时 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">26</span>
+          <span class="puzzle-title">沙漏计时 9 分钟 — 7分钟与4分钟</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>有一个 <strong>7 分钟</strong>的沙漏和一个 <strong>4 分钟</strong>的沙漏，如何准确计时 <strong>9 分钟</strong>？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>绝对时刻</th><th>操作</th><th>7min 沙漏</th><th>4min 沙漏</th></tr>
+              <tr><td>0 min</td><td>两个沙漏<strong>同时启动</strong></td><td>剩 7 min</td><td>剩 4 min</td></tr>
+              <tr><td>4 min</td><td>4min 流完，<strong>立即翻转</strong></td><td>剩 3 min</td><td>重置，剩 4 min</td></tr>
+              <tr><td>7 min</td><td>7min 流完，<strong>从此刻开始计 9 分钟</strong></td><td>—</td><td>已流 3 min，剩 <strong>1 min</strong></td></tr>
+              <tr><td>8 min</td><td>4min 流完（计时 1 min），<strong>翻转</strong></td><td>—</td><td>重置，剩 4 min</td></tr>
+              <tr><td>12 min</td><td>4min 流完（计时 5 min），<strong>翻转</strong></td><td>—</td><td>重置，剩 4 min</td></tr>
+              <tr><td>16 min</td><td>4min 流完（<strong>计时共 9 min</strong> ✓）</td><td>—</td><td>—</td></tr>
+            </table>
+            <p style="margin-top:8px">从第 7min 起：1 + 4 + 4 = <strong>9 分钟</strong>，计时结束。</p>
+          </div>
+          <div class="puzzle-answer">答案：两漏同时启动 → 4min 到翻转 → 7min 到开始计时 → 再经过 9min（1+4+4）结束</div>
+          <div class="puzzle-insight" style="margin-top:10px">关键洞察：7min 沙漏流完时，4min 沙漏恰好剩 1min，这 1min 成为计时的起点，后面只需两轮完整的 4min。绳子烧计时（题 #8）用的是同样的"剩余量利用"思路。</div>
+        </div>
+      </div>
+
+      <!-- P27 轮流抛硬币 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">27</span>
+          <span class="puzzle-title">轮流抛硬币 — 先手赢的概率</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>两人轮流抛一枚公平硬币（正面概率 1/2），<strong>先抛到正面者赢</strong>。先手的人赢的概率是多少？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>设先手赢的概率为 P。</p>
+            <ul style="margin-top:8px">
+              <li>先手第 1 次抛出正面（概率 1/2）→ 先手赢</li>
+              <li>先手反面（1/2）且后手也反面（1/2）→ 回到初始状态，先手赢概率仍为 P</li>
+            </ul>
+            <p style="margin-top:8px">列方程：P = 1/2 + (1/4)P → (3/4)P = 1/2 → <strong>P = 2/3</strong></p>
+            <p style="margin-top:8px">验证（等比数列）：1/2 + (1/2)³ + (1/2)⁵ + … = (1/2) / (1 − 1/4) = 2/3 ✓</p>
+          </div>
+          <div class="puzzle-answer">答案：先手赢的概率为 2/3，后手为 1/3</div>
+          <div class="puzzle-insight" style="margin-top:10px">先手优势来自"第一次机会"。推广：若硬币正面概率为 p，先手赢概率 = p / (1−(1−p)²)。当 p=1/2 时 = 2/3。</div>
+        </div>
+      </div>
+
+      <!-- P28 两人分蛋糕 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">28</span>
+          <span class="puzzle-title">两人分蛋糕 — 你切我选</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>两个人分一块蛋糕，如何保证<strong>两个人都认为自己拿到了至少一半</strong>（即两人都觉得公平）？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>经典方案：<strong>"你切我选"（I cut, you choose）</strong></p>
+            <ul style="margin-top:8px">
+              <li>A 负责切蛋糕，切成他认为<strong>均等的两份</strong></li>
+              <li>B 负责先选，选走他认为<strong>更大的那份</strong></li>
+              <li>A 拿剩下的</li>
+            </ul>
+            <p style="margin-top:8px">分析：A 切时已保证两份在自己看来相等，无论 B 选哪块，A 都得到他认为的 1/2；B 在两块中自由选择，必然能选到他认为 ≥ 1/2 的。</p>
+          </div>
+          <div class="puzzle-answer">答案：A 切、B 先选，两人都满意</div>
+          <div class="puzzle-insight" style="margin-top:10px">推广到 n 人：可用"最后减少者算法"（Last Diminisher）——每人轮流声称某块是 1/n，若认为太大可削减，最终拿走者得到他认可的 1/n，剩余人继续分剩下的。</div>
+        </div>
+      </div>
+
+      <!-- P29 村庄不忠丈夫 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">29</span>
+          <span class="puzzle-title">村庄不忠丈夫 — 公共知识连锁推理</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>村庄有 <strong>50 对夫妻</strong>，其中 <strong>40 个丈夫不忠</strong>。每个妻子能看到其他所有丈夫是否不忠，但不知道自己丈夫的情况，妻子们也不互相透露。若妻子确认自己丈夫不忠，必须当天将其处决。女王公开宣布：<strong>"你们村至少有一个丈夫不忠。"</strong> 之后会发生什么？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>与红眼岛（题 #17）本质相同，女王的话将"共有知识"升级为"公共知识"，触发连锁推理。</p>
+            <ul style="margin-top:8px">
+              <li>每个不忠丈夫的妻子能看到另外 39 个不忠丈夫</li>
+              <li>归纳推理：若只有 1 个不忠 → 第 1 天处决；若有 2 个 → 第 2 天；……</li>
+              <li>实际有 40 个不忠 → <strong>第 40 天</strong>，40 位妻子同时处决自己的丈夫</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：第 40 天，40 个不忠丈夫被同时处决</div>
+          <div class="puzzle-insight" style="margin-top:10px">女王的话并非新信息（每个妻子已知至少 39 个不忠），但它建立了<strong>公共知识</strong>——每人知道每人知道……至少有 1 个不忠。没有这个公共知识，连锁推理无法启动，什么都不会发生。</div>
+        </div>
+      </div>
+
       <!-- P21 Wason 扑克牌 -->
       <div class="puzzle-card">
         <div class="puzzle-card-header" onclick="togglePuzzle(this)">
