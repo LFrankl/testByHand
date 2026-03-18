@@ -1328,6 +1328,60 @@
         </div>
       </div>
 
+      <!-- P38 100盏灯泡 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">38</span>
+          <span class="puzzle-title">100 盏灯泡 — 完全平方数（字节高频）</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>100 盏灯泡编号 1–100，初始全部关闭。第 k 轮按下所有编号是 k 的倍数的开关（k=1,2,…,100）。100 轮结束后，哪些灯是亮的？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>灯 n 被按下的次数 = <strong>n 的因数个数</strong>（第 d 轮会操作 n 当且仅当 d 是 n 的因数）。</p>
+            <ul style="margin-top:8px">
+              <li>按了<strong>奇数次</strong> → 最终亮；按了<strong>偶数次</strong> → 最终灭</li>
+              <li>因数通常成对出现（d 与 n/d），唯有 d = √n 时单独出现</li>
+              <li>因数个数为奇数 ⟺ n 是<strong>完全平方数</strong></li>
+            </ul>
+            <p style="margin-top:8px">1–100 中的完全平方数：1, 4, 9, 16, 25, 36, 49, 64, 81, 100，共 <strong>10 个</strong>。</p>
+          </div>
+          <div class="puzzle-answer">答案：10 盏灯亮着，编号为 1, 4, 9, 16, 25, 36, 49, 64, 81, 100</div>
+          <div class="puzzle-insight" style="margin-top:10px">关键洞察：因数成对出现，完全平方数多一个"自配对"因数（√n），使总数变奇。推广：N 盏灯 N 轮，最终亮着的有 ⌊√N⌋ 盏。</div>
+        </div>
+      </div>
+
+      <!-- P39 戴帽子问题 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">39</span>
+          <span class="puzzle-title">戴帽子问题 — 逐层排除推理（腾讯/阿里高频）</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>3 名学生排成一列：C 在最后（看到 A、B），B 在中间（看到 A），A 在最前（看不到任何人）。3 顶蓝帽、2 顶红帽，各戴一顶，藏起剩 2 顶。依次问：C 不知道，B 不知道，A 说知道。A 的帽子是什么颜色？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>① C 说不知道</strong>：若 A、B 都戴红帽（2 顶红全用完），C 立刻知道自己是蓝。C 不知道 → <strong>A、B 不全是红帽</strong>。</p>
+            <p style="margin-top:8px"><strong>② B 说不知道</strong>：B 知道"A、B 不全是红"，且 B 能看到 A 的帽子。</p>
+            <ul style="margin-top:4px">
+              <li>若 B 看到 A 是<strong>红帽</strong>：则"不全红"要求 B 自己必须是蓝 → B <em>应该知道</em>。但 B 说不知道，矛盾。</li>
+              <li>所以 B 看到 A 是<strong>蓝帽</strong>，但仍无法确定自己（蓝或红都合法）→ B 不知道 ✓</li>
+            </ul>
+            <p style="margin-top:8px"><strong>③ A 说知道</strong>：A 听到 B 不知道，推出"B 看到 A 不是红帽"，即自己不是红帽。</p>
+          </div>
+          <div class="puzzle-answer">答案：A 戴的是蓝帽</div>
+          <div class="puzzle-insight" style="margin-top:10px">"不知道"本身是信息。每个人的沉默都在缩小可能的帽子分配空间，A 通过两次"不知道"完成了反向推理。</div>
+        </div>
+      </div>
+
       <!-- P30 天使与魔鬼 -->
       <div class="puzzle-card">
         <div class="puzzle-card-header" onclick="togglePuzzle(this)">
