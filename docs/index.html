@@ -379,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题 · 59 智力题 · 8 系统设计</span>
+  <span class="badge">9 题 · 59 智力题 · 9 系统设计</span>
 </header>
 
 <div class="layout">
@@ -3018,6 +3018,149 @@
           </div>
 
           <div class="sd-answer">核心权衡：JWT 无状态（性能好）vs Opaque Token（可主动失效）。生产方案：短期 JWT 做 Access Token + Opaque Refresh Token 存 Redis，踢人时删 session + 写黑名单。「全部下线」用 token_ver 版本号方案，避免维护大量黑名单 Key。</div>
+        </div>
+      </div>
+
+      <!-- SD9 实时排行榜 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">9</span>
+          <span class="sd-title">设计实时排行榜</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个实时排行榜系统（如游戏战力榜、微博热搜榜）。要求：分数实时更新，支持 TOP N 查询、单用户排名查询、分页浏览，QPS ~10 万，支持千万级参赛者，同分时按时间先到优先。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">核心数据结构：Redis ZSET</div>
+            <div class="sd-code">ZSET 内部实现：
+  • 元素数 ≤ 128 且分数值小 → ziplist（紧凑内存，O(N) 操作）
+  • 超出阈值 → 跳表（skiplist）+ 哈希表
+    - 跳表：O(log N) 增删查，按 score 有序，支持范围查询
+    - 哈希表：O(1) 按 member 查分数
+
+常用命令：
+  ZADD   leaderboard {score} {member}        # 插入/更新分数
+  ZINCRBY leaderboard {delta} {member}       # 原子增减分数
+  ZREVRANK leaderboard {member}              # 倒序排名（0-based）
+  ZREVRANGE leaderboard 0 99 WITHSCORES      # TOP 100
+  ZREVRANGEBYSCORE leaderboard +inf -inf LIMIT offset count  # 分页
+  ZCARD  leaderboard                         # 总参赛人数</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">同分排序规则</div>
+            <p>Redis ZSET 同 score 时按 member 字典序排，无法直接表达"同分先到先得"。解决方案：<strong>将时间戳编码进 score</strong>。</p>
+            <div class="sd-code">方案：score = 实际分数 * 1e10 + (MAX_TS - 当前时间戳ms)
+
+• 高位存实际分数，保证主排序正确
+• 低位存时间戳的补数：时间越早，低位值越大，同分时排名更靠前（先到先得）
+• MAX_TS 取一个足够大的常数（如 9999999999999）
+
+示例：
+  玩家 A：分数 1000，时间 1700000000000ms
+  score = 1000 * 1e10 + (9999999999999 - 1700000000000) = 10008299999999999
+
+注意：score 精度需用 float64（53 bit 有效位），实际分数 + 时间戳编码后
+不能超过 2^53 ≈ 9 × 10^15，需根据业务分数范围评估是否溢出</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">分数更新一致性</div>
+            <ul>
+              <li><strong>原子更新</strong>：用 <code>ZINCRBY</code> 原子增减，不要先 GET 再 ZADD（存在竞态）</li>
+              <li><strong>绝对值更新</strong>：需先从 DB 读准确分数再 ZADD 覆盖时，用 Lua 脚本保证"读旧值 + 写新值"原子化</li>
+              <li><strong>DB 与 Redis 双写一致性</strong>：
+                <ul>
+                  <li>先写 DB，再更新 Redis（Redis 失败则接受短暂不一致，定时对账）</li>
+                  <li>或通过 Binlog → Canal → 消费者更新 Redis（最终一致，解耦业务）</li>
+                </ul>
+              </li>
+              <li><strong>高并发积分场景</strong>：本地聚合（批量收集 delta，定期 flush 到 Redis）减少 ZINCRBY 频次，允许秒级延迟</li>
+            </ul>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">分页查询优化</div>
+            <div class="sd-code">方案一：ZREVRANGE offset limit（简单但有性能问题）
+  ZREVRANGE leaderboard 0 19        # 第1页
+  ZREVRANGE leaderboard 20 39       # 第2页
+  问题：offset 越大，Redis 需跳过越多节点，O(log N + M)；
+        深翻页（如第10万页）性能明显下降
+
+方案二：游标分页（推荐）
+  记录上一页最后一条的 score 作为游标
+  ZREVRANGEBYSCORE leaderboard (last_score -inf LIMIT 0 20
+  优点：每次查询 O(log N + M)，与 offset 无关
+  注意：同分时需结合 member 作二级游标防漏数据
+
+方案三：分段缓存（超大榜单）
+  TOP 100 存独立缓存，定时刷新（如每秒），直接返回无需实时查 ZSET
+  100~10000 走 ZSET 实时查
+  10000 之后走 DB 精确查（用户自己的排名）</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">大数据量下的近似算法</div>
+            <table class="sd-table">
+              <tr><th>问题</th><th>算法</th><th>原理</th><th>误差</th></tr>
+              <tr>
+                <td>千万级 ZSET 内存过大</td>
+                <td><strong>分片 ZSET</strong></td>
+                <td>按 uid % N 分到 N 个 ZSET，TOP K 时从每个分片取 TOP K 再归并</td>
+                <td>精确，但归并代价 O(N·K)</td>
+              </tr>
+              <tr>
+                <td>热搜词频统计（海量事件流）</td>
+                <td><strong>Count-Min Sketch</strong></td>
+                <td>多行 hash 数组，更新时对每行对应列 +1，查询取最小值；空间 O(w·d)，与元素数无关</td>
+                <td>只高估，不低估；误差可配置</td>
+              </tr>
+              <tr>
+                <td>近似 TOP K（不要求精确）</td>
+                <td><strong>Heavy Hitter（SpaceSaving）</strong></td>
+                <td>固定 K 个计数槽，新元素替换最小计数槽，适合流式 TOP K</td>
+                <td>近似，适合热搜这类允许误差的场景</td>
+              </tr>
+              <tr>
+                <td>跳表（skiplist）查找</td>
+                <td><strong>跳表</strong></td>
+                <td>多级索引链表，期望 O(log N) 查找/插入/删除，Redis ZSET 内部实现</td>
+                <td>精确，概率性平衡</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">完整架构</div>
+            <div class="sd-code">【分数更新链路】
+业务服务 → ZINCRBY Redis（实时）
+         → 写 Kafka（topic: score_change）
+         → 消费者写 MySQL（持久化，用于对账和冷数据查询）
+
+【读取链路】
+TOP N 查询：
+  → 优先读分段缓存（TOP 100 定时缓存，1s TTL）
+  → 未命中 → ZREVRANGE Redis
+
+个人排名：
+  → ZREVRANK Redis（O(log N)，直接返回）
+
+分页浏览：
+  → ZREVRANGEBYSCORE 游标分页
+
+超大榜单（>500万成员）：
+  → 分片 ZSET（uid % 16 → 16 个 ZSET）
+  → TOP K：各分片各取 TOP K，服务端归并
+
+【定时对账】
+  每分钟从 MySQL 聚合分数 → 与 Redis 比对 → 发现不一致则修复</div>
+          </div>
+
+          <div class="sd-answer">核心答案：Redis ZSET 是实时排行榜标准解。同分排序用 score 编码时间戳补数（高位分数+低位补时间）；分页用游标而非 offset；千万级榜单分片 ZSET 归并；热搜词频用 Count-Min Sketch 近似统计降低内存。ZINCRBY 保证原子更新，Binlog+Canal 解耦 DB 与 Redis 一致性。</div>
         </div>
       </div>
 

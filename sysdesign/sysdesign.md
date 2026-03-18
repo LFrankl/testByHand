@@ -356,3 +356,34 @@ Token 方案选型：
 - 设备指纹哈希防止伪造 device_id 绕过互踢
 
 **答案**：短期 JWT + Opaque Refresh Token + Redis sessions Hash 管理多设备；踢人 = 删 session + 写黑名单；全部下线用 token_ver 版本号方案，避免黑名单 Key 爆炸。
+
+---
+
+## 9. 设计实时排行榜
+
+**题目**
+
+设计一个实时排行榜系统（如游戏战力榜、微博热搜榜）。要求：分数实时更新，支持 TOP N 查询、单用户排名查询、分页浏览，QPS ~10 万，支持千万级参赛者，同分时按时间先到优先。
+
+**设计要点**
+
+- **核心数据结构**：Redis ZSET（跳表 + 哈希表）。ZINCRBY 原子增减，ZREVRANK O(log N) 查排名，ZREVRANGE O(log N + M) 查范围
+
+- **同分排序**：将时间戳编码进 score = 实际分数 × 1e10 + (MAX_TS - 当前时间戳ms)。高位保证主排序，低位补数保证同分先到先得；需确认 float64 精度不溢出（2^53 ≈ 9×10^15）
+
+- **分数更新一致性**：
+  - 原子更新用 ZINCRBY，禁止 GET + ZADD 竞态
+  - DB 与 Redis 双写：先写 DB 再更新 Redis；或 Binlog → Canal → 消费者更新（解耦）
+  - 高并发积分：本地聚合 delta，定期批量 flush，减少 Redis 压力
+
+- **分页查询优化**：
+  - 避免 ZREVRANGE + 大 offset（深翻页性能差）
+  - 游标分页：ZREVRANGEBYSCORE (last_score -inf LIMIT 0 20，每次 O(log N + M)
+  - TOP 100 分段缓存（1s TTL 定时刷新），中段走 ZSET，深度排名走 DB
+
+- **大数据量近似算法**：
+  - 分片 ZSET：uid % N 分到 N 个 ZSET，TOP K 归并（精确）
+  - Count-Min Sketch：多行 hash 数组统计词频，空间 O(w·d) 与元素数无关，适合热搜统计（近似，只高估不低估）
+  - Heavy Hitter（SpaceSaving）：固定 K 槽流式 TOP K，适合允许误差的热搜榜
+
+**答案**：Redis ZSET 标准解；score 编码时间戳解决同分排序；游标分页替代 offset；千万级分片 ZSET 归并；热搜词频用 Count-Min Sketch；ZINCRBY 保证原子更新，Canal 解耦 DB 一致性。
