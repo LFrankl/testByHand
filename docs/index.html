@@ -1076,6 +1076,94 @@
         </div>
       </div>
 
+      <!-- P21 Wason 扑克牌 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">21</span>
+          <span class="puzzle-title">扑克牌验证规则 — Wason 选择任务</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>桌上有 4 张牌，每张牌一面是字母、另一面是数字。你看到：<strong>E、K、4、7</strong>。规则：<strong>"如果一面是元音字母，另一面必须是偶数。"</strong> 最少需要翻哪几张牌，才能验证规则是否成立？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>验证"如果 P，则 Q"等价于寻找"P 且非 Q"的反例。</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>牌面</th><th>需要翻吗？</th><th>原因</th></tr>
+              <tr><td><strong>E</strong>（元音）</td><td>✅ 必须翻</td><td>背面若不是偶数，规则违反</td></tr>
+              <tr><td><strong>K</strong>（辅音）</td><td>❌ 不需要</td><td>规则只管元音，辅音无论如何都不违反</td></tr>
+              <tr><td><strong>4</strong>（偶数）</td><td>❌ 不需要</td><td>规则说"元音→偶数"，不反过来；翻开只能证实，不能证伪</td></tr>
+              <tr><td><strong>7</strong>（奇数）</td><td>✅ 必须翻</td><td>背面若是元音，则"元音但非偶数"，规则违反</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：翻 E 和 7</div>
+          <div class="puzzle-insight" style="margin-top:10px">大多数人错选"E 和 4"。逻辑验证的本质是<strong>寻找反例</strong>而非正例——4 翻开只能"证实"规则，对验证没有意义。</div>
+        </div>
+      </div>
+
+      <!-- P22 蒙提霍尔 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">22</span>
+          <span class="puzzle-title">蒙提霍尔问题 — 换门还是不换</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>面前有 <strong>3 扇门</strong>，一扇后面是汽车，两扇是山羊。你选了 <strong>1 号门</strong>。主持人知道答案，他打开了 <strong>3 号门</strong>（山羊），问你：<strong>要不要换选 2 号门？</strong></p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>列举所有情况（初始选 1 号门）：</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>汽车位置</th><th>主持人开的门</th><th>不换结果</th><th>换后结果</th></tr>
+              <tr><td>1 号</td><td>2 或 3 号</td><td>✅ 赢</td><td>❌ 输</td></tr>
+              <tr><td>2 号</td><td>3 号</td><td>❌ 输</td><td>✅ 赢</td></tr>
+              <tr><td>3 号</td><td>2 号</td><td>❌ 输</td><td>✅ 赢</td></tr>
+            </table>
+            <p style="margin-top:8px">不换赢概率 = <strong>1/3</strong>；换后赢概率 = <strong>2/3</strong></p>
+          </div>
+          <div class="puzzle-answer">答案：应该换，换后赢的概率是 2/3</div>
+          <div class="puzzle-insight" style="margin-top:10px">主持人的行为<strong>不是随机的</strong>——他永远开山羊那扇，因此他的行动传递了信息，让剩余那扇门"继承"了原本 2/3 的概率。直觉上的"各 50%"忽略了主持人行为中隐含的信息。</div>
+        </div>
+      </div>
+
+      <!-- P23 囚徒困境 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">23</span>
+          <span class="puzzle-title">囚徒困境 — 个体理性 vs 集体最优</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>警察分别审讯 A 和 B，两人无法沟通，各自选择<strong>沉默</strong>或<strong>揭发</strong>：</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>A \ B</th><th>沉默</th><th>揭发</th></tr>
+              <tr><td><strong>沉默</strong></td><td>A判1年，B判1年</td><td>A判10年，B释放</td></tr>
+              <tr><td><strong>揭发</strong></td><td>A释放，B判10年</td><td>A判5年，B判5年</td></tr>
+            </table>
+            <p style="margin-top:8px">两人都是理性人，各自会怎么选择？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>对 A 来说，无论 B 如何选择，揭发总是更优（<strong>严格占优策略</strong>）：</p>
+            <ul style="margin-top:8px">
+              <li>B 沉默时：揭发(0年) &lt; 沉默(1年) → 揭发更优</li>
+              <li>B 揭发时：揭发(5年) &lt; 沉默(10年) → 揭发仍更优</li>
+            </ul>
+            <p style="margin-top:8px">B 的推理对称。两人都选揭发，各判 5 年（<strong>纳什均衡</strong>）。但双方都沉默各只判 1 年——明显更好，却无法达到。</p>
+          </div>
+          <div class="puzzle-answer">答案：理性个体都会揭发，各判 5 年（纳什均衡）；集体最优是各判 1 年，但理性推理无法达到</div>
+          <div class="puzzle-insight" style="margin-top:10px">现实应用：价格战、军备竞赛、公地悲剧。打破困境的方法：重复博弈建立信任、引入外部约束机制。</div>
+        </div>
+      </div>
+
       <!-- P14 水桶量水 -->
       <div class="puzzle-card">
         <div class="puzzle-card-header" onclick="togglePuzzle(this)">
