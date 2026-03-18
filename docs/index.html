@@ -1076,6 +1076,281 @@
         </div>
       </div>
 
+      <!-- P14 水桶量水 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">14</span>
+          <span class="puzzle-title">水桶量水 — 3升与5升量出4升</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>有一个 <strong>3 升</strong>的桶和一个 <strong>5 升</strong>的桶，水源无限，没有刻度。如何量出恰好 <strong>4 升</strong>水？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>步骤</th><th>操作</th><th>3升桶</th><th>5升桶</th></tr>
+              <tr><td>①</td><td>装满 5升桶</td><td>0</td><td>5</td></tr>
+              <tr><td>②</td><td>5升桶倒入 3升桶</td><td>3</td><td>2</td></tr>
+              <tr><td>③</td><td>倒空 3升桶</td><td>0</td><td>2</td></tr>
+              <tr><td>④</td><td>5升桶剩余 2升倒入 3升桶</td><td>2</td><td>0</td></tr>
+              <tr><td>⑤</td><td>装满 5升桶</td><td>2</td><td>5</td></tr>
+              <tr><td>⑥</td><td>5升桶倒入 3升桶（只能倒 1升）</td><td>3</td><td><strong>4</strong></td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：4升水在 5升桶中，共 6 步</div>
+          <div class="puzzle-insight" style="margin-top:10px">推广：若两桶容量<strong>互质</strong>（最大公因数为 1），则理论上可以量出 1 到两桶容量之和之间的任意整数升。</div>
+        </div>
+      </div>
+
+      <!-- P15 电灯开关 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">15</span>
+          <span class="puzzle-title">电灯开关 — 热/冷辨识三盏灯</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>房间外有 <strong>3 个开关</strong>，分别控制房间内的 <strong>3 盏灯</strong>，初始全部关闭。你<strong>只能进入房间一次</strong>，进去前可以任意拨动开关，进去后不能再出来操作。如何确定每个开关对应哪盏灯？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>利用灯泡的两种状态：<strong>亮/灭（电）</strong>和<strong>冷/热（余温）</strong>，让三盏灯携带不同信息。</p>
+            <ul style="margin-top:8px">
+              <li>打开<strong>开关 1</strong>，等待 <strong>5 分钟</strong></li>
+              <li>关闭<strong>开关 1</strong>，打开<strong>开关 2</strong></li>
+              <li>立即进入房间</li>
+            </ul>
+            <p style="margin-top:8px">判断：<strong>亮着的灯</strong> → 开关 2；<strong>灭但热的灯</strong> → 开关 1；<strong>灭且冷的灯</strong> → 开关 3。</p>
+          </div>
+          <div class="puzzle-answer">答案：利用"亮/灭"和"热/冷"两个维度区分三盏灯，一次进入即可确定</div>
+          <div class="puzzle-insight" style="margin-top:10px">本质是信息编码：2 个布尔维度可区分 4 种状态，足以覆盖 3 盏灯。当"只能操作一次"是约束时，优先寻找额外可利用的物理维度。</div>
+        </div>
+      </div>
+
+      <!-- P16 狼羊白菜 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">16</span>
+          <span class="puzzle-title">狼羊白菜渡河 — 约束搜索</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>农夫需要将<strong>一只狼、一只羊、一棵白菜</strong>运过河，船每次只能带<strong>一样</strong>。农夫不在时：狼会吃羊，羊会吃白菜。如何让三样东西都安全过河？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>步骤</th><th>带走</th><th>此岸</th><th>对岸</th></tr>
+              <tr><td>①</td><td>带羊过去</td><td>狼、白菜</td><td>羊</td></tr>
+              <tr><td>②</td><td>空船返回</td><td>狼、白菜</td><td>羊</td></tr>
+              <tr><td>③</td><td>带狼过去</td><td>白菜</td><td>狼、羊</td></tr>
+              <tr><td>④</td><td><strong>带羊返回（关键！）</strong></td><td>羊、白菜</td><td>狼</td></tr>
+              <tr><td>⑤</td><td>带白菜过去</td><td>羊</td><td>狼、白菜</td></tr>
+              <tr><td>⑥</td><td>空船返回</td><td>羊</td><td>狼、白菜</td></tr>
+              <tr><td>⑦</td><td>带羊过去</td><td>—</td><td>全部 ✓</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：7 步，关键是第 4 步把羊带回来</div>
+          <div class="puzzle-insight" style="margin-top:10px">反直觉：把已过河的东西带回来，反而是最优解。把羊视为"唯一不能单独留下"的元素，其他对象两两无冲突，因此羊需要特殊处理。</div>
+        </div>
+      </div>
+
+      <!-- P17 红眼岛 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">17</span>
+          <span class="puzzle-title">红眼岛 — 公共知识的威力</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>一座岛上有 <strong>100 个人，全部是红眼睛</strong>。每人能看到其他所有人的眼睛颜色，但看不到自己的，也不能讨论眼睛颜色。若某人确认自己是红眼睛，必须当晚离岛。某天外来者公开宣布："<strong>你们中至少有一个人是红眼睛。</strong>" 之后会发生什么？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>外来者的话看似废话（每人已能看到 99 双红眼），但它引入了<strong>公共知识</strong>——每个人都知道其他人也听到了这句话。</p>
+            <p style="margin-top:8px">归纳法：</p>
+            <ul>
+              <li><strong>n=1</strong>：红眼人看到 0 个红眼，立刻知道自己是，<strong>第 1 天</strong>离岛</li>
+              <li><strong>n=2</strong>：每人看到 1 个红眼，等第 1 天——对方没走，说明对方也看到了红眼，即自己也是，<strong>第 2 天</strong>同时离岛</li>
+              <li><strong>n=100</strong>：<strong>第 100 天</strong>，100 人全部同时离岛</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：第 100 天，100 人全部同时离岛</div>
+          <div class="puzzle-insight" style="margin-top:10px">外来者的话并非废话，它建立了<strong>公共知识</strong>（每人知道每人知道……至少有 1 个红眼）。而之前只有<strong>共有知识</strong>（每人各自知道至少 99 个红眼，但这不是公共知识）。两者差距引发了连锁推理。</div>
+        </div>
+      </div>
+
+      <!-- P18 掰巧克力 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">18</span>
+          <span class="puzzle-title">掰巧克力 — 操作次数不变量</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>一块 <strong>m × n</strong> 的巧克力，沿格线掰开，每次只能掰<strong>一块</strong>（不能叠放同时掰多块）。最少需要掰<strong>几次</strong>才能全部分成 1×1 的单块？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>用<strong>不变量</strong>思考：每掰一次，块数增加 <strong>1</strong>。</p>
+            <ul style="margin-top:8px">
+              <li>初始：1 块</li>
+              <li>目标：m × n 块</li>
+              <li>需要增加：m × n − 1 块</li>
+            </ul>
+            <p style="margin-top:8px">无论以何种顺序掰，都需要恰好 <strong>m × n − 1 次</strong>，与策略无关。</p>
+          </div>
+          <div class="puzzle-answer">答案：m × n − 1 次</div>
+          <div class="puzzle-insight" style="margin-top:10px">陷阱：试图寻找"更优策略"——实际上所有策略次数相同，因为每次操作恰好让块数 +1，是严格不变量。遇到"最少几步"类问题，先想：有没有每步都必然发生的量？</div>
+        </div>
+      </div>
+
+      <!-- P19 鸽巢原理 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">19</span>
+          <span class="puzzle-title">鸽巢原理 — 北京人头发数</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>北京有 <strong>2000 万人口</strong>，每人头发数量在 0 到 <strong>150 万根</strong>之间。是否一定存在至少两个人头发数量完全相同？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>鸽巢原理（抽屉原理）</strong>：如果 n 个物品放入 m 个容器，且 n &gt; m，则至少有一个容器里有 2 个以上的物品。</p>
+            <ul style="margin-top:8px">
+              <li>头发数量：0, 1, 2, …, 1500000，共 <strong>150 万 + 1 = 1500001 种</strong>（容器数）</li>
+              <li>人口：<strong>2000 万</strong>（物品数）</li>
+              <li>2000 万 >> 150 万，必然存在至少两人头发数完全相同</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：一定存在，且至少有约 13 人头发数量相同（2000万 ÷ 150万 ≈ 13.3）</div>
+          <div class="puzzle-insight" style="margin-top:10px">鸽巢原理应用：生日问题、哈希碰撞、抽屉里的袜子……凡是"可能性有限但对象更多"的场景都能用。它的力量在于：无需知道具体分布，仅靠计数就能得出确定性结论。</div>
+        </div>
+      </div>
+
+      <!-- P20 蚂蚁爬杆 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">20</span>
+          <span class="puzzle-title">蚂蚁爬杆 — 相遇等效穿过</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>一根长 <strong>1 米（100 cm）</strong>的细杆，<strong>100 只蚂蚁</strong>随机分布在杆上，每只蚂蚁以 <strong>1 cm/s</strong> 的速度向左或向右爬行，到达端点后掉落。两只蚂蚁相遇时，各自<strong>掉头</strong>反向爬。问：所有蚂蚁都掉落所需的<strong>最长时间</strong>是多少？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>关键洞察</strong>：两只蚂蚁相遇掉头，等价于两只蚂蚁<strong>互相穿过</strong>——因为蚂蚁完全相同，无法区分。</p>
+            <p style="margin-top:8px">因此，每只蚂蚁的运动等价于一个"信号"从初始位置向某方向匀速传播，直到端点为止。所有信号独立，互不干扰。</p>
+            <p style="margin-top:8px">最坏情况：某只蚂蚁距离最远端点 <strong>100 cm</strong>，需要 <strong>100 秒</strong>。</p>
+          </div>
+          <div class="puzzle-answer">答案：最长时间为 100 秒</div>
+          <div class="puzzle-insight" style="margin-top:10px">模型简化的威力：把"掉头"换成"穿过"，复杂的多体碰撞问题瞬间变成 100 个独立的单体运动问题。寻找等价变换往往是解决复杂系统问题的关键。</div>
+        </div>
+      <!-- P21 Wason 扑克牌 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">21</span>
+          <span class="puzzle-title">扑克牌验证规则 — Wason 选择任务</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>桌上有 4 张牌，每张牌一面是字母、另一面是数字。你看到：<strong>E、K、4、7</strong>。规则：<strong>"如果一面是元音字母，另一面必须是偶数。"</strong> 最少需要翻哪几张牌，才能验证规则是否成立？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>验证"如果 P，则 Q"等价于寻找"P 且非 Q"的反例。</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>牌面</th><th>需要翻吗？</th><th>原因</th></tr>
+              <tr><td><strong>E</strong>（元音）</td><td>✅ 必须翻</td><td>背面若不是偶数，规则违反</td></tr>
+              <tr><td><strong>K</strong>（辅音）</td><td>❌ 不需要</td><td>规则只管元音，辅音无论如何都不违反</td></tr>
+              <tr><td><strong>4</strong>（偶数）</td><td>❌ 不需要</td><td>规则说"元音→偶数"，不反过来；翻开只能证实，不能证伪</td></tr>
+              <tr><td><strong>7</strong>（奇数）</td><td>✅ 必须翻</td><td>背面若是元音，则"元音但非偶数"，规则违反</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：翻 E 和 7</div>
+          <div class="puzzle-insight" style="margin-top:10px">大多数人错选"E 和 4"。逻辑验证的本质是<strong>寻找反例</strong>而非正例——4 翻开只能"证实"规则，对验证没有意义。</div>
+        </div>
+      </div>
+
+      <!-- P22 蒙提霍尔 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">22</span>
+          <span class="puzzle-title">蒙提霍尔问题 — 换门还是不换</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>面前有 <strong>3 扇门</strong>，一扇后面是汽车，两扇是山羊。你选了 <strong>1 号门</strong>。主持人知道答案，他打开了 <strong>3 号门</strong>（山羊），问你：<strong>要不要换选 2 号门？</strong></p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>列举所有情况（初始选 1 号门）：</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>汽车位置</th><th>主持人开的门</th><th>不换结果</th><th>换后结果</th></tr>
+              <tr><td>1 号</td><td>2 或 3 号</td><td>✅ 赢</td><td>❌ 输</td></tr>
+              <tr><td>2 号</td><td>3 号</td><td>❌ 输</td><td>✅ 赢</td></tr>
+              <tr><td>3 号</td><td>2 号</td><td>❌ 输</td><td>✅ 赢</td></tr>
+            </table>
+            <p style="margin-top:8px">不换赢概率 = <strong>1/3</strong>；换后赢概率 = <strong>2/3</strong></p>
+          </div>
+          <div class="puzzle-answer">答案：应该换，换后赢的概率是 2/3</div>
+          <div class="puzzle-insight" style="margin-top:10px">主持人的行为<strong>不是随机的</strong>——他永远开山羊那扇，因此他的行动传递了信息，让剩余那扇门"继承"了原本 2/3 的概率。直觉上的"各 50%"忽略了主持人行为中隐含的信息。</div>
+        </div>
+      </div>
+
+      <!-- P23 囚徒困境 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">23</span>
+          <span class="puzzle-title">囚徒困境 — 个体理性 vs 集体最优</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>警察分别审讯 A 和 B，两人无法沟通，各自选择<strong>沉默</strong>或<strong>揭发</strong>：</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>A \ B</th><th>沉默</th><th>揭发</th></tr>
+              <tr><td><strong>沉默</strong></td><td>A判1年，B判1年</td><td>A判10年，B释放</td></tr>
+              <tr><td><strong>揭发</strong></td><td>A释放，B判10年</td><td>A判5年，B判5年</td></tr>
+            </table>
+            <p style="margin-top:8px">两人都是理性人，各自会怎么选择？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>对 A 来说，无论 B 如何选择，揭发总是更优（<strong>严格占优策略</strong>）：</p>
+            <ul style="margin-top:8px">
+              <li>B 沉默时：揭发(0年) &lt; 沉默(1年) → 揭发更优</li>
+              <li>B 揭发时：揭发(5年) &lt; 沉默(10年) → 揭发仍更优</li>
+            </ul>
+            <p style="margin-top:8px">B 的推理对称。两人都选揭发，各判 5 年（<strong>纳什均衡</strong>）。但双方都沉默各只判 1 年——明显更好，却无法达到。</p>
+          </div>
+          <div class="puzzle-answer">答案：理性个体都会揭发，各判 5 年（纳什均衡）；集体最优是各判 1 年，但理性推理无法达到</div>
+          <div class="puzzle-insight" style="margin-top:10px">现实应用：价格战、军备竞赛、公地悲剧。打破困境的方法：重复博弈建立信任、引入外部约束机制。</div>
+        </div>
+      </div>
+
       <!-- P24 8球找重球 -->
       <div class="puzzle-card">
         <div class="puzzle-card-header" onclick="togglePuzzle(this)">
@@ -1240,91 +1515,425 @@
         </div>
       </div>
 
-      <!-- P21 Wason 扑克牌 -->
+      <!-- P30 天使与魔鬼 -->
       <div class="puzzle-card">
         <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">21</span>
-          <span class="puzzle-title">扑克牌验证规则 — Wason 选择任务</span>
+          <span class="puzzle-num">30</span>
+          <span class="puzzle-title">天使与魔鬼 — 两问找出天使</span>
           <button class="puzzle-toggle">展开</button>
         </div>
         <div class="hint-block puzzle-body">
           <div class="puzzle-section">
             <div class="puzzle-section-label">题目</div>
-            <p>桌上有 4 张牌，每张牌一面是字母、另一面是数字。你看到：<strong>E、K、4、7</strong>。规则：<strong>"如果一面是元音字母，另一面必须是偶数。"</strong> 最少需要翻哪几张牌，才能验证规则是否成立？</p>
+            <p>三个人 A、B、C：一人只说真话（天使），一人只说假话（魔鬼），一人有时真有时假（凡人）。只能问<strong>两个是非题</strong>，找出谁是天使。</p>
           </div>
           <div class="puzzle-section">
             <div class="puzzle-section-label">关键思路</div>
-            <p>验证"如果 P，则 Q"等价于寻找"P 且非 Q"的反例。</p>
-            <table class="puzzle-table" style="margin-top:8px">
-              <tr><th>牌面</th><th>需要翻吗？</th><th>原因</th></tr>
-              <tr><td><strong>E</strong>（元音）</td><td>✅ 必须翻</td><td>背面若不是偶数，规则违反</td></tr>
-              <tr><td><strong>K</strong>（辅音）</td><td>❌ 不需要</td><td>规则只管元音，辅音无论如何都不违反</td></tr>
-              <tr><td><strong>4</strong>（偶数）</td><td>❌ 不需要</td><td>规则说"元音→偶数"，不反过来；翻开只能证实，不能证伪</td></tr>
-              <tr><td><strong>7</strong>（奇数）</td><td>✅ 必须翻</td><td>背面若是元音，则"元音但非偶数"，规则违反</td></tr>
-            </table>
-          </div>
-          <div class="puzzle-answer">答案：翻 E 和 7</div>
-          <div class="puzzle-insight" style="margin-top:10px">大多数人错选"E 和 4"。逻辑验证的本质是<strong>寻找反例</strong>而非正例——4 翻开只能"证实"规则，对验证没有意义。</div>
-        </div>
-      </div>
-
-      <!-- P22 蒙提霍尔 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">22</span>
-          <span class="puzzle-title">蒙提霍尔问题 — 换门还是不换</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>面前有 <strong>3 扇门</strong>，一扇后面是汽车，两扇是山羊。你选了 <strong>1 号门</strong>。主持人知道答案，他打开了 <strong>3 号门</strong>（山羊），问你：<strong>要不要换选 2 号门？</strong></p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>列举所有情况（初始选 1 号门）：</p>
-            <table class="puzzle-table" style="margin-top:8px">
-              <tr><th>汽车位置</th><th>主持人开的门</th><th>不换结果</th><th>换后结果</th></tr>
-              <tr><td>1 号</td><td>2 或 3 号</td><td>✅ 赢</td><td>❌ 输</td></tr>
-              <tr><td>2 号</td><td>3 号</td><td>❌ 输</td><td>✅ 赢</td></tr>
-              <tr><td>3 号</td><td>2 号</td><td>❌ 输</td><td>✅ 赢</td></tr>
-            </table>
-            <p style="margin-top:8px">不换赢概率 = <strong>1/3</strong>；换后赢概率 = <strong>2/3</strong></p>
-          </div>
-          <div class="puzzle-answer">答案：应该换，换后赢的概率是 2/3</div>
-          <div class="puzzle-insight" style="margin-top:10px">主持人的行为<strong>不是随机的</strong>——他永远开山羊那扇，因此他的行动传递了信息，让剩余那扇门"继承"了原本 2/3 的概率。直觉上的"各 50%"忽略了主持人行为中隐含的信息。</div>
-        </div>
-      </div>
-
-      <!-- P23 囚徒困境 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">23</span>
-          <span class="puzzle-title">囚徒困境 — 个体理性 vs 集体最优</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>警察分别审讯 A 和 B，两人无法沟通，各自选择<strong>沉默</strong>或<strong>揭发</strong>：</p>
-            <table class="puzzle-table" style="margin-top:8px">
-              <tr><th>A \ B</th><th>沉默</th><th>揭发</th></tr>
-              <tr><td><strong>沉默</strong></td><td>A判1年，B判1年</td><td>A判10年，B释放</td></tr>
-              <tr><td><strong>揭发</strong></td><td>A释放，B判10年</td><td>A判5年，B判5年</td></tr>
-            </table>
-            <p style="margin-top:8px">两人都是理性人，各自会怎么选择？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>对 A 来说，无论 B 如何选择，揭发总是更优（<strong>严格占优策略</strong>）：</p>
+            <p>核心技巧：<strong>反事实自指问题</strong>——"如果我问你 X，你会回答'是'吗？"</p>
             <ul style="margin-top:8px">
-              <li>B 沉默时：揭发(0年) &lt; 沉默(1年) → 揭发更优</li>
-              <li>B 揭发时：揭发(5年) &lt; 沉默(10年) → 揭发仍更优</li>
+              <li>天使：直接如实回答（与直接问 X 等价）</li>
+              <li>魔鬼：撒谎两次，双重否定，<strong>结果与天使一样</strong>（等价于事实）</li>
+              <li>凡人：不可预测</li>
             </ul>
-            <p style="margin-top:8px">B 的推理对称。两人都选揭发，各判 5 年（<strong>纳什均衡</strong>）。但双方都沉默各只判 1 年——明显更好，却无法达到。</p>
+            <p style="margin-top:8px"><strong>第 1 问</strong>（问 A）："如果我问你'B 是天使吗'，你会回答'是'吗？"</p>
+            <ul>
+              <li>A 是天使或魔鬼 → 答案可信，等价于"B 是否天使"</li>
+              <li>A 是凡人 → 答案不可信，但第 2 问可换人</li>
+            </ul>
+            <p style="margin-top:8px"><strong>第 2 问</strong>：根据第 1 问结果，在可信范围内再问一次同结构的问题确认。</p>
           </div>
-          <div class="puzzle-answer">答案：理性个体都会揭发，各判 5 年（纳什均衡）；集体最优是各判 1 年，但理性推理无法达到</div>
-          <div class="puzzle-insight" style="margin-top:10px">现实应用：价格战、军备竞赛、公地悲剧。打破困境的方法：重复博弈建立信任、引入外部约束机制。</div>
+          <div class="puzzle-answer">答案：用反事实自指问题，天使和魔鬼的回答等价于事实，两问内可锁定天使</div>
+          <div class="puzzle-insight" style="margin-top:10px">精髓：魔鬼撒谎两次（对"你会回答"撒谎 + 对内容撒谎）= 双重否定 = 真话。这让天使和魔鬼的可信度等价，从而绕过凡人的干扰。</div>
+        </div>
+      </div>
+
+      <!-- P31 疯狗问题 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">31</span>
+          <span class="puzzle-title">疯狗问题 — 第几天响枪有几条疯狗</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>村里有 50 条狗，其中有若干条疯狗（至少 1 条）。每个村民能看到其他所有狗是否疯，看不到自己的。推理出自己的狗是疯狗，必须当天开枪打死它。<strong>第 1、2 天没有枪声，第 3 天响起了枪声。</strong>问村里有几条疯狗？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>与红眼岛（#17）本质相同，归纳推理：</p>
+            <ul style="margin-top:8px">
+              <li>1 条疯狗 → 主人看到 0 条，<strong>第 1 天</strong>开枪</li>
+              <li>2 条疯狗 → 各主人看到 1 条，等第 1 天无枪声，第 2 天开枪</li>
+              <li>3 条疯狗 → 各主人看到 2 条，等第 2 天无枪声，<strong>第 3 天</strong>开枪</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：3 条疯狗（第 n 天响枪 → 有 n 条疯狗）</div>
+          <div class="puzzle-insight" style="margin-top:10px">这是公共知识推理的第三个变体（红眼岛 / 村庄不忠丈夫 / 疯狗）。形式不同，本质一样：沉默传递信息，每一天的"没有枪声"排除了"只有 n 条"的情况，推动下一天的行动。</div>
+        </div>
+      </div>
+
+      <!-- P32 海盗分金币 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">32</span>
+          <span class="puzzle-title">海盗分金币 — 逆向归纳法</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>5 个海盗（1–5 号）抢得 100 枚金币。按编号依次提方案，<strong>超过半数赞成</strong>则通过，否则提案者被扔下海。优先级：①保命 ②多拿金币 ③喜欢看别人死（可投反对）。问 1 号会如何分配？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路（逆向归纳）</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>剩余人数</th><th>方案</th><th>分析</th></tr>
+              <tr><td>只剩 5 号</td><td>5号:100</td><td>必然通过</td></tr>
+              <tr><td>剩 4、5 号</td><td>4号必死</td><td>5号永远反对，4号只有 1 票</td></tr>
+              <tr><td>剩 3、4、5 号</td><td>3:99, 4:0, 5:1</td><td>4号支持（否则自己死）；5号拿 1 枚比之后独吞差但 4 号死了 5 号得 100，5 号会反对……重算：5号若拒绝，下轮 4 号必死，5 号得 100；所以 3 号需给 5 号 &gt;0，给 1 枚即可。4 号只要活命就赞成，给 0 枚</td></tr>
+              <tr><td>剩 2–5 号</td><td>2:97, 3:0, 4:1, 5:2</td><td>收买 4（上轮得 0，给 1）和 5（上轮得 1，给 2）</td></tr>
+              <tr><td>全部 5 人</td><td><strong>1:96, 2:0, 3:1, 4:0, 5:3</strong></td><td>收买 3（上轮得 0，给 1）和 5（上轮得 2，给 3）</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：1 号提案 — 1号:96, 2号:0, 3号:1, 4号:0, 5号:3，获 1+3+5 = 3 票通过</div>
+          <div class="puzzle-insight" style="margin-top:10px">逆向归纳：从最后一步往前推，每一步都收买"在下一轮会拿到最少的人"，用比他下一轮多 1 枚的价格买票，成本最低。</div>
+        </div>
+      </div>
+
+      <!-- P33 圆周三点锐角三角形 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">33</span>
+          <span class="puzzle-title">圆周三点构成锐角三角形的概率</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>在圆周上<strong>随机</strong>取三个点，这三个点构成<strong>锐角三角形</strong>的概率是多少？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>三角形为锐角三角形 ⟺ 三顶点所在圆弧，<strong>每段弧都小于半圆</strong>（&lt;180°）。</p>
+            <p style="margin-top:8px">设三段弧长度为 x、y、z（归一化，x+y+z=1）。在均匀分布下，(x,y,z) 均匀分布于单纯形 x+y+z=1, x,y,z≥0。</p>
+            <p style="margin-top:8px">需要 x &lt; 1/2，y &lt; 1/2，z &lt; 1/2。满足条件的区域占总面积的 <strong>1/4</strong>（三个约束各排除 1/4，交集剩 1/4）。</p>
+          </div>
+          <div class="puzzle-answer">答案：概率为 1/4</div>
+          <div class="puzzle-insight" style="margin-top:10px">直觉：三点随机取，有相当大概率某段弧超过半圆（即某角是钝角）。只有 1/4 的情况下三段弧都不超过半圆，才是锐角三角形。</div>
+        </div>
+      </div>
+
+      <!-- P34 男女比例悖论 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">34</span>
+          <span class="puzzle-title">男女比例悖论 — 策略不改变概率</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>一个国家每个家庭持续生孩子，直到生出<strong>第一个男孩</strong>为止。每次生育男女概率均为 1/2，各次独立。问这个国家最终<strong>男女比例</strong>是多少？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>直觉陷阱：有些家庭生了很多女儿，感觉女多男少。实际上：</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>家庭类型</th><th>概率</th><th>男孩数</th><th>女孩数</th></tr>
+              <tr><td>男</td><td>1/2</td><td>1</td><td>0</td></tr>
+              <tr><td>女男</td><td>1/4</td><td>1</td><td>1</td></tr>
+              <tr><td>女女男</td><td>1/8</td><td>1</td><td>2</td></tr>
+              <tr><td>…</td><td>…</td><td>1</td><td>…</td></tr>
+            </table>
+            <p style="margin-top:8px">每个家庭恰好生 <strong>1 个男孩</strong>，期望女孩数 = Σ k×(1/2)^(k+1) = <strong>1</strong>。</p>
+          </div>
+          <div class="puzzle-answer">答案：男女比例为 1:1</div>
+          <div class="puzzle-insight" style="margin-top:10px">无论生育策略如何，只要每次生育概率固定为 1/2，总体男女比例就是 1:1。策略只影响<strong>家庭规模</strong>，不影响总体性别比。每次生育都是独立事件，策略无法改变概率。</div>
+        </div>
+      </div>
+
+      <!-- P35 费米估算理发店 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">35</span>
+          <span class="puzzle-title">费米估算 — 城市理发店数量</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>如何估算你所在城市的理发店数量？（以北京为例）</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>费米估算：从需求侧出发，逐步拆解。</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>参数</th><th>估算值</th><th>依据</th></tr>
+              <tr><td>北京人口</td><td>2200 万</td><td>常识</td></tr>
+              <tr><td>人均理发频率</td><td>每月 1 次</td><td>男性频繁，女性较少，取均值</td></tr>
+              <tr><td>全市理发次数/月</td><td>2200 万次</td><td></td></tr>
+              <tr><td>每店每天接客</td><td>约 20 人次</td><td>2 位师傅 × 10 人/天</td></tr>
+              <tr><td>每店每月接客</td><td>600 人次</td><td>20 × 30</td></tr>
+              <tr><td>理发店数量</td><td><strong>≈ 3.7 万家</strong></td><td>2200万 ÷ 600</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：约 3–4 万家（实际北京约 4–6 万家，量级正确）</div>
+          <div class="puzzle-insight" style="margin-top:10px">费米估算考察<strong>结构化拆解能力</strong>和<strong>数量级判断</strong>，不要求精确。面试时展示：合理假设 → 逐步推导 → 自我校验（和常识对比）。</div>
+        </div>
+      </div>
+
+      <!-- P36 64匹马找前4名 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">36</span>
+          <span class="puzzle-title">64 匹马找前 4 名 — 字节跳动高频题</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p><strong>64 匹马</strong>，<strong>8 条赛道</strong>，每次同时跑 8 匹，无计时器（只能比较名次）。最少几次找出<strong>前 4 名</strong>？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>轮次</th><th>内容</th><th>目的</th></tr>
+              <tr><td>第 1–8 次</td><td>分 8 组各跑一次</td><td>每组排出名次</td></tr>
+              <tr><td>第 9 次</td><td>8 组冠军同场</td><td>确定<strong>全场第 1 名</strong>，确定候选组</td></tr>
+            </table>
+            <p style="margin-top:8px">第 9 次后，第 5–8 名的组<strong>全部淘汰</strong>。候选（需决出第 2/3/4 名）：</p>
+            <ul>
+              <li>G1 组 2、3、4 名（3 匹）</li>
+              <li>G2 组 1、2、3 名（3 匹）</li>
+              <li>G3 组 1、2 名（2 匹）</li>
+              <li>G4 组 1 名（1 匹）</li>
+              <li>共 <strong>9 匹</strong>，超出 8 条赛道</li>
+            </ul>
+            <p style="margin-top:8px"><strong>第 10 次</strong>：从 9 匹中取 8 匹跑（去掉 G1 组第 4 名——其前面已有 3 匹保证比它快），前 3 名即全场 2/3/4 名。</p>
+          </div>
+          <div class="puzzle-answer">答案：10 次（8 次分组 + 1 次冠军赛 + 1 次 8 马决赛）</div>
+          <div class="puzzle-insight" style="margin-top:10px">与 25 匹找前 3（题 #7）的区别：前 4 名候选更多（9 匹 vs 5 匹），8 条赛道恰好能一次跑完 8 匹，去掉必然不进前 4 的那 1 匹后刚好 8 匹。</div>
+        </div>
+      </div>
+
+      <!-- P37 桌上放硬币 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">37</span>
+          <span class="puzzle-title">桌上放硬币 — 中心对称必胜策略</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>两人轮流在一张<strong>矩形桌子</strong>上放硬币（相同大小，不可重叠，不可超出桌面），<strong>谁最后放不下谁输</strong>。先手有没有必胜策略？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>先手必胜，策略为<strong>中心对称</strong>：</p>
+            <ol style="margin-top:8px">
+              <li>先手第一步将硬币放在<strong>桌子正中心</strong></li>
+              <li>之后，无论后手在哪里放，先手都在<strong>关于桌子中心对称的位置</strong>放一枚</li>
+            </ol>
+            <p style="margin-top:8px">为什么必胜：矩形桌子关于中心点对称，若后手能放下，对称位置<strong>一定也能放下</strong>（空间对称保证）。因此先手永远有位置，后手先无处放则输。</p>
+          </div>
+          <div class="puzzle-answer">答案：先手必胜。策略：第一步占中心，之后始终走中心对称位置</div>
+          <div class="puzzle-insight" style="margin-top:10px">推广：任何具有中心对称性的桌面（圆形、正多边形等）都适用。本质是<strong>策略窃取（Strategy Stealing）</strong>：先手通过占据对称轴，将后手的每一步转化为自己的合法应对。</div>
+        </div>
+      </div>
+
+      <!-- P38 100盏灯泡 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">38</span>
+          <span class="puzzle-title">100 盏灯泡 — 完全平方数（字节高频）</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>100 盏灯泡编号 1–100，初始全部关闭。第 k 轮按下所有编号是 k 的倍数的开关（k=1,2,…,100）。100 轮结束后，哪些灯是亮的？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>灯 n 被按下的次数 = <strong>n 的因数个数</strong>（第 d 轮会操作 n 当且仅当 d 是 n 的因数）。</p>
+            <ul style="margin-top:8px">
+              <li>按了<strong>奇数次</strong> → 最终亮；按了<strong>偶数次</strong> → 最终灭</li>
+              <li>因数通常成对出现（d 与 n/d），唯有 d = √n 时单独出现</li>
+              <li>因数个数为奇数 ⟺ n 是<strong>完全平方数</strong></li>
+            </ul>
+            <p style="margin-top:8px">1–100 中的完全平方数：1, 4, 9, 16, 25, 36, 49, 64, 81, 100，共 <strong>10 个</strong>。</p>
+          </div>
+          <div class="puzzle-answer">答案：10 盏灯亮着，编号为 1, 4, 9, 16, 25, 36, 49, 64, 81, 100</div>
+          <div class="puzzle-insight" style="margin-top:10px">关键洞察：因数成对出现，完全平方数多一个"自配对"因数（√n），使总数变奇。推广：N 盏灯 N 轮，最终亮着的有 ⌊√N⌋ 盏。</div>
+        </div>
+      </div>
+
+      <!-- P39 戴帽子问题 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">39</span>
+          <span class="puzzle-title">戴帽子问题 — 逐层排除推理（腾讯/阿里高频）</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>3 名学生排成一列：C 在最后（看到 A、B），B 在中间（看到 A），A 在最前（看不到任何人）。3 顶蓝帽、2 顶红帽，各戴一顶，藏起剩 2 顶。依次问：C 不知道，B 不知道，A 说知道。A 的帽子是什么颜色？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>① C 说不知道</strong>：若 A、B 都戴红帽（2 顶红全用完），C 立刻知道自己是蓝。C 不知道 → <strong>A、B 不全是红帽</strong>。</p>
+            <p style="margin-top:8px"><strong>② B 说不知道</strong>：B 知道"A、B 不全是红"，且 B 能看到 A 的帽子。</p>
+            <ul style="margin-top:4px">
+              <li>若 B 看到 A 是<strong>红帽</strong>：则"不全红"要求 B 自己必须是蓝 → B <em>应该知道</em>。但 B 说不知道，矛盾。</li>
+              <li>所以 B 看到 A 是<strong>蓝帽</strong>，但仍无法确定自己（蓝或红都合法）→ B 不知道 ✓</li>
+            </ul>
+            <p style="margin-top:8px"><strong>③ A 说知道</strong>：A 听到 B 不知道，推出"B 看到 A 不是红帽"，即自己不是红帽。</p>
+          </div>
+          <div class="puzzle-answer">答案：A 戴的是蓝帽</div>
+          <div class="puzzle-insight" style="margin-top:10px">"不知道"本身是信息。每个人的沉默都在缩小可能的帽子分配空间，A 通过两次"不知道"完成了反向推理。</div>
+        </div>
+      </div>
+
+      <!-- P40 毒药与试纸 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">40</span>
+          <span class="puzzle-title">毒药与试纸 — 二进制编码（技术流）</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>1000 瓶药水，1 瓶毒药，10 张试纸。毒药滴上试纸 24 小时后变红，一张试纸可同时滴多瓶。只能做<strong>一轮</strong>测试，如何找出毒药？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>二进制编码（与题 #6 老鼠版本同构）：</p>
+            <ul style="margin-top:8px">
+              <li>将 1000 瓶编号 1–1000，转为二进制（最多 10 位）</li>
+              <li>第 i 张试纸滴入所有<strong>二进制第 i 位为 1</strong> 的瓶子</li>
+              <li>24 小时后，变红试纸的编号（1=红，0=不变）从高到低排列，得到的二进制数即为毒药编号</li>
+            </ul>
+            <p style="margin-top:8px">例：第 1、3、4 张变红 → 毒药编号 = 0b1101 = 13。10 张试纸可区分 2¹⁰ = 1024 种情况，覆盖 1000 瓶。</p>
+          </div>
+          <div class="puzzle-answer">答案：10 张试纸，按二进制编码分配，一轮即可确定</div>
+          <div class="puzzle-insight" style="margin-top:10px">与题 #6 老鼠版本的区别：媒介换成试纸，原理完全相同。核心思想：让每张试纸代表一个二进制位，变红/不变 = 1/0，读出毒药编号。</div>
+        </div>
+      </div>
+
+      <!-- P41 砝码称重 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">41</span>
+          <span class="puzzle-title">砝码称重 — 三进制最优解（谷歌经典）</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>天平称重，砝码可放两侧（与物体同侧或对侧）。要能称出 <strong>1–40 克</strong>所有整数重量，最少需要几个砝码？分别多重？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>砝码可放两侧 → 每个砝码有三种状态：+1（对侧）、0（不用）、-1（同侧），对应<strong>平衡三进制</strong>。</p>
+            <ul style="margin-top:8px">
+              <li>n 个砝码最多表示 (3ⁿ − 1)/2 个正整数重量</li>
+              <li>需覆盖 40：(3ⁿ − 1)/2 ≥ 40 → 3ⁿ ≥ 81 → n ≥ 4（3⁴ = 81）</li>
+              <li>砝码重量：<strong>1, 3, 9, 27</strong>（= 3⁰, 3¹, 3², 3³）</li>
+            </ul>
+            <p style="margin-top:8px">验证：2 = 3−1；5 = 9−3−1；40 = 27+9+3+1 ✓</p>
+          </div>
+          <div class="puzzle-answer">答案：4 个砝码，重量为 1g、3g、9g、27g</div>
+          <div class="puzzle-insight" style="margin-top:10px">若砝码只能放对侧（普通二进制），需要 1, 2, 4, 8, 16, 32 共 6 个才能覆盖 1–63。允许放同侧后，三进制让每个砝码的信息量从 1 位增加到 1.58 位，大幅减少所需数量。</div>
+        </div>
+      </div>
+
+      <!-- P42 无限网格找黑格 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">42</span>
+          <span class="puzzle-title">无限网格找黑格 — 螺旋遍历</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>无限大网格，从原点出发，每次移动上下左右相邻格。有一个黑色陷阱格，位置未知。设计策略<strong>保证有限步内找到</strong>，且最坏步数尽可能少。</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>随机游走不保证有限步内找到，必须<strong>系统性遍历</strong>。</p>
+            <p style="margin-top:8px"><strong>螺旋遍历策略</strong>：按曼哈顿距离从小到大，逐层螺旋覆盖所有格子。</p>
+            <ul style="margin-top:8px">
+              <li>距离原点曼哈顿距离 ≤ d 的格子共 2d² + 2d + 1 个</li>
+              <li>遍历完距离 ≤ d 所有格子，实际步数约 O(d²)（含折返）</li>
+              <li>这是<strong>最优的</strong>：距离 d 内有 O(d²) 个格子都需被排除</li>
+            </ul>
+            <p style="margin-top:8px">若黑格在距离 d 处，最坏步数 = O(d²)。</p>
+          </div>
+          <div class="puzzle-answer">答案：螺旋遍历，从原点按曼哈顿距离逐层扩展，最坏步数 O(d²)</div>
+          <div class="puzzle-insight" style="margin-top:10px">关键：无限空间中必须有系统性策略，不能随机。螺旋遍历是直觉上最自然的方案，也是信息论意义下的最优解——步数与需要排除的格子数同阶。</div>
+        </div>
+      </div>
+
+      <!-- P43 微信红包算法 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">43</span>
+          <span class="puzzle-title">微信红包分配算法 — 二倍均值法</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>微信红包：总金额固定，n 人抢。设计算法使：① 每人期望金额相等；② 先抢不占系统性优势；③ 每人至少得 0.01 元。</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>朴素方案（有缺陷）</strong>：先抢的人随机取 [0, 剩余金额]，最后一人拿剩余。先抢期望 = 剩余额/2，越早越占优。</p>
+            <p style="margin-top:8px"><strong>二倍均值法</strong>：每次从剩余金额中随机抽取，范围为：</p>
+            <p style="margin-top:4px; padding: 8px; background:#F3F4F6; border-radius:4px; font-family:monospace">当前金额 = random(0.01,  剩余金额/剩余人数 × 2)</p>
+            <ul style="margin-top:8px">
+              <li>每次期望 ≈ 剩余均值（= 总额/n，忽略最小值 0.01）</li>
+              <li>抢走期望后，剩余均值不变，下一个人的期望也等于总额/n</li>
+              <li>先后顺序无系统性优劣</li>
+              <li>最后一人直接拿剩余，可能偏高也可能偏低</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：二倍均值法——每次从 [0.01, 剩余均值×2] 均匀随机取值，期望相等，先后无优劣</div>
+          <div class="puzzle-insight" style="margin-top:10px">面试延伸：若要让红包金额服从正态分布怎么设计？若要限制最大金额不超过总额的 X% 怎么办？实际微信红包还考虑了并发抢包的原子性问题（预分配 vs 实时计算）。</div>
+        </div>
+      </div>
+
+      <!-- P44 电梯调度 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">44</span>
+          <span class="puzzle-title">电梯调度分组策略 — 楼层分段优化</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>40 层写字楼，4 部电梯，早高峰全部从 1 楼上行，人员分布均匀。如何分配电梯负责的楼层，使<strong>平均等待时间最短</strong>？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>核心原则：让每部电梯承担的 <strong>"人×层数"大致相等</strong>（即每部电梯的总工作量均衡）。</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>电梯</th><th>负责楼层</th><th>特点</th></tr>
+              <tr><td>1 号</td><td>2–10 层</td><td>低层快速往返，班次最密</td></tr>
+              <tr><td>2 号</td><td>11–20 层</td><td>中低层</td></tr>
+              <tr><td>3 号</td><td>21–30 层</td><td>中高层</td></tr>
+              <tr><td>4 号</td><td>31–40 层</td><td>高层，单程最长</td></tr>
+            </table>
+            <p style="margin-top:8px">若实际人流低层更密集，可将分割点前移：如 2–8 / 9–18 / 19–29 / 30–40，让低层电梯负责更少楼层以提高班次频率。</p>
+          </div>
+          <div class="puzzle-answer">答案：按楼层均匀分段（每电梯约 10 层），根据实际人流分布调整分割点，使各电梯"人×层数"均衡</div>
+          <div class="puzzle-insight" style="margin-top:10px">延伸思考：① 是否应该有电梯只停奇数层/偶数层？② 午高峰双向流量如何调度？③ 实际系统用强化学习动态调度（如 ThyssenKrupp MULTI）。面试考察的是结构化分析能力，不要求最优解。</div>
         </div>
       </div>
 
@@ -1738,615 +2347,6 @@
         </div>
       </div>
 
-      <!-- P40 毒药与试纸 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">40</span>
-          <span class="puzzle-title">毒药与试纸 — 二进制编码（技术流）</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>1000 瓶药水，1 瓶毒药，10 张试纸。毒药滴上试纸 24 小时后变红，一张试纸可同时滴多瓶。只能做<strong>一轮</strong>测试，如何找出毒药？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>二进制编码（与题 #6 老鼠版本同构）：</p>
-            <ul style="margin-top:8px">
-              <li>将 1000 瓶编号 1–1000，转为二进制（最多 10 位）</li>
-              <li>第 i 张试纸滴入所有<strong>二进制第 i 位为 1</strong> 的瓶子</li>
-              <li>24 小时后，变红试纸的编号（1=红，0=不变）从高到低排列，得到的二进制数即为毒药编号</li>
-            </ul>
-            <p style="margin-top:8px">例：第 1、3、4 张变红 → 毒药编号 = 0b1101 = 13。10 张试纸可区分 2¹⁰ = 1024 种情况，覆盖 1000 瓶。</p>
-          </div>
-          <div class="puzzle-answer">答案：10 张试纸，按二进制编码分配，一轮即可确定</div>
-          <div class="puzzle-insight" style="margin-top:10px">与题 #6 老鼠版本的区别：媒介换成试纸，原理完全相同。核心思想：让每张试纸代表一个二进制位，变红/不变 = 1/0，读出毒药编号。</div>
-        </div>
-      </div>
-
-      <!-- P41 砝码称重 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">41</span>
-          <span class="puzzle-title">砝码称重 — 三进制最优解（谷歌经典）</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>天平称重，砝码可放两侧（与物体同侧或对侧）。要能称出 <strong>1–40 克</strong>所有整数重量，最少需要几个砝码？分别多重？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>砝码可放两侧 → 每个砝码有三种状态：+1（对侧）、0（不用）、-1（同侧），对应<strong>平衡三进制</strong>。</p>
-            <ul style="margin-top:8px">
-              <li>n 个砝码最多表示 (3ⁿ − 1)/2 个正整数重量</li>
-              <li>需覆盖 40：(3ⁿ − 1)/2 ≥ 40 → 3ⁿ ≥ 81 → n ≥ 4（3⁴ = 81）</li>
-              <li>砝码重量：<strong>1, 3, 9, 27</strong>（= 3⁰, 3¹, 3², 3³）</li>
-            </ul>
-            <p style="margin-top:8px">验证：2 = 3−1；5 = 9−3−1；40 = 27+9+3+1 ✓</p>
-          </div>
-          <div class="puzzle-answer">答案：4 个砝码，重量为 1g、3g、9g、27g</div>
-          <div class="puzzle-insight" style="margin-top:10px">若砝码只能放对侧（普通二进制），需要 1, 2, 4, 8, 16, 32 共 6 个才能覆盖 1–63。允许放同侧后，三进制让每个砝码的信息量从 1 位增加到 1.58 位，大幅减少所需数量。</div>
-        </div>
-      </div>
-
-      <!-- P42 无限网格找黑格 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">42</span>
-          <span class="puzzle-title">无限网格找黑格 — 螺旋遍历</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>无限大网格，从原点出发，每次移动上下左右相邻格。有一个黑色陷阱格，位置未知。设计策略<strong>保证有限步内找到</strong>，且最坏步数尽可能少。</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>随机游走不保证有限步内找到，必须<strong>系统性遍历</strong>。</p>
-            <p style="margin-top:8px"><strong>螺旋遍历策略</strong>：按曼哈顿距离从小到大，逐层螺旋覆盖所有格子。</p>
-            <ul style="margin-top:8px">
-              <li>距离原点曼哈顿距离 ≤ d 的格子共 2d² + 2d + 1 个</li>
-              <li>遍历完距离 ≤ d 所有格子，实际步数约 O(d²)（含折返）</li>
-              <li>这是<strong>最优的</strong>：距离 d 内有 O(d²) 个格子都需被排除</li>
-            </ul>
-            <p style="margin-top:8px">若黑格在距离 d 处，最坏步数 = O(d²)。</p>
-          </div>
-          <div class="puzzle-answer">答案：螺旋遍历，从原点按曼哈顿距离逐层扩展，最坏步数 O(d²)</div>
-          <div class="puzzle-insight" style="margin-top:10px">关键：无限空间中必须有系统性策略，不能随机。螺旋遍历是直觉上最自然的方案，也是信息论意义下的最优解——步数与需要排除的格子数同阶。</div>
-        </div>
-      </div>
-
-      <!-- P43 微信红包算法 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">43</span>
-          <span class="puzzle-title">微信红包分配算法 — 二倍均值法</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>微信红包：总金额固定，n 人抢。设计算法使：① 每人期望金额相等；② 先抢不占系统性优势；③ 每人至少得 0.01 元。</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p><strong>朴素方案（有缺陷）</strong>：先抢的人随机取 [0, 剩余金额]，最后一人拿剩余。先抢期望 = 剩余额/2，越早越占优。</p>
-            <p style="margin-top:8px"><strong>二倍均值法</strong>：每次从剩余金额中随机抽取，范围为：</p>
-            <p style="margin-top:4px; padding: 8px; background:#F3F4F6; border-radius:4px; font-family:monospace">当前金额 = random(0.01,  剩余金额/剩余人数 × 2)</p>
-            <ul style="margin-top:8px">
-              <li>每次期望 ≈ 剩余均值（= 总额/n，忽略最小值 0.01）</li>
-              <li>抢走期望后，剩余均值不变，下一个人的期望也等于总额/n</li>
-              <li>先后顺序无系统性优劣</li>
-              <li>最后一人直接拿剩余，可能偏高也可能偏低</li>
-            </ul>
-          </div>
-          <div class="puzzle-answer">答案：二倍均值法——每次从 [0.01, 剩余均值×2] 均匀随机取值，期望相等，先后无优劣</div>
-          <div class="puzzle-insight" style="margin-top:10px">面试延伸：若要让红包金额服从正态分布怎么设计？若要限制最大金额不超过总额的 X% 怎么办？实际微信红包还考虑了并发抢包的原子性问题（预分配 vs 实时计算）。</div>
-        </div>
-      </div>
-
-      <!-- P44 电梯调度 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">44</span>
-          <span class="puzzle-title">电梯调度分组策略 — 楼层分段优化</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>40 层写字楼，4 部电梯，早高峰全部从 1 楼上行，人员分布均匀。如何分配电梯负责的楼层，使<strong>平均等待时间最短</strong>？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>核心原则：让每部电梯承担的 <strong>"人×层数"大致相等</strong>（即每部电梯的总工作量均衡）。</p>
-            <table class="puzzle-table" style="margin-top:8px">
-              <tr><th>电梯</th><th>负责楼层</th><th>特点</th></tr>
-              <tr><td>1 号</td><td>2–10 层</td><td>低层快速往返，班次最密</td></tr>
-              <tr><td>2 号</td><td>11–20 层</td><td>中低层</td></tr>
-              <tr><td>3 号</td><td>21–30 层</td><td>中高层</td></tr>
-              <tr><td>4 号</td><td>31–40 层</td><td>高层，单程最长</td></tr>
-            </table>
-            <p style="margin-top:8px">若实际人流低层更密集，可将分割点前移：如 2–8 / 9–18 / 19–29 / 30–40，让低层电梯负责更少楼层以提高班次频率。</p>
-          </div>
-          <div class="puzzle-answer">答案：按楼层均匀分段（每电梯约 10 层），根据实际人流分布调整分割点，使各电梯"人×层数"均衡</div>
-          <div class="puzzle-insight" style="margin-top:10px">延伸思考：① 是否应该有电梯只停奇数层/偶数层？② 午高峰双向流量如何调度？③ 实际系统用强化学习动态调度（如 ThyssenKrupp MULTI）。面试考察的是结构化分析能力，不要求最优解。</div>
-        </div>
-      </div>
-
-      <!-- P38 100盏灯泡 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">38</span>
-          <span class="puzzle-title">100 盏灯泡 — 完全平方数（字节高频）</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>100 盏灯泡编号 1–100，初始全部关闭。第 k 轮按下所有编号是 k 的倍数的开关（k=1,2,…,100）。100 轮结束后，哪些灯是亮的？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>灯 n 被按下的次数 = <strong>n 的因数个数</strong>（第 d 轮会操作 n 当且仅当 d 是 n 的因数）。</p>
-            <ul style="margin-top:8px">
-              <li>按了<strong>奇数次</strong> → 最终亮；按了<strong>偶数次</strong> → 最终灭</li>
-              <li>因数通常成对出现（d 与 n/d），唯有 d = √n 时单独出现</li>
-              <li>因数个数为奇数 ⟺ n 是<strong>完全平方数</strong></li>
-            </ul>
-            <p style="margin-top:8px">1–100 中的完全平方数：1, 4, 9, 16, 25, 36, 49, 64, 81, 100，共 <strong>10 个</strong>。</p>
-          </div>
-          <div class="puzzle-answer">答案：10 盏灯亮着，编号为 1, 4, 9, 16, 25, 36, 49, 64, 81, 100</div>
-          <div class="puzzle-insight" style="margin-top:10px">关键洞察：因数成对出现，完全平方数多一个"自配对"因数（√n），使总数变奇。推广：N 盏灯 N 轮，最终亮着的有 ⌊√N⌋ 盏。</div>
-        </div>
-      </div>
-
-      <!-- P39 戴帽子问题 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">39</span>
-          <span class="puzzle-title">戴帽子问题 — 逐层排除推理（腾讯/阿里高频）</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>3 名学生排成一列：C 在最后（看到 A、B），B 在中间（看到 A），A 在最前（看不到任何人）。3 顶蓝帽、2 顶红帽，各戴一顶，藏起剩 2 顶。依次问：C 不知道，B 不知道，A 说知道。A 的帽子是什么颜色？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p><strong>① C 说不知道</strong>：若 A、B 都戴红帽（2 顶红全用完），C 立刻知道自己是蓝。C 不知道 → <strong>A、B 不全是红帽</strong>。</p>
-            <p style="margin-top:8px"><strong>② B 说不知道</strong>：B 知道"A、B 不全是红"，且 B 能看到 A 的帽子。</p>
-            <ul style="margin-top:4px">
-              <li>若 B 看到 A 是<strong>红帽</strong>：则"不全红"要求 B 自己必须是蓝 → B <em>应该知道</em>。但 B 说不知道，矛盾。</li>
-              <li>所以 B 看到 A 是<strong>蓝帽</strong>，但仍无法确定自己（蓝或红都合法）→ B 不知道 ✓</li>
-            </ul>
-            <p style="margin-top:8px"><strong>③ A 说知道</strong>：A 听到 B 不知道，推出"B 看到 A 不是红帽"，即自己不是红帽。</p>
-          </div>
-          <div class="puzzle-answer">答案：A 戴的是蓝帽</div>
-          <div class="puzzle-insight" style="margin-top:10px">"不知道"本身是信息。每个人的沉默都在缩小可能的帽子分配空间，A 通过两次"不知道"完成了反向推理。</div>
-        </div>
-      </div>
-
-      <!-- P30 天使与魔鬼 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">30</span>
-          <span class="puzzle-title">天使与魔鬼 — 两问找出天使</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>三个人 A、B、C：一人只说真话（天使），一人只说假话（魔鬼），一人有时真有时假（凡人）。只能问<strong>两个是非题</strong>，找出谁是天使。</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>核心技巧：<strong>反事实自指问题</strong>——"如果我问你 X，你会回答'是'吗？"</p>
-            <ul style="margin-top:8px">
-              <li>天使：直接如实回答（与直接问 X 等价）</li>
-              <li>魔鬼：撒谎两次，双重否定，<strong>结果与天使一样</strong>（等价于事实）</li>
-              <li>凡人：不可预测</li>
-            </ul>
-            <p style="margin-top:8px"><strong>第 1 问</strong>（问 A）："如果我问你'B 是天使吗'，你会回答'是'吗？"</p>
-            <ul>
-              <li>A 是天使或魔鬼 → 答案可信，等价于"B 是否天使"</li>
-              <li>A 是凡人 → 答案不可信，但第 2 问可换人</li>
-            </ul>
-            <p style="margin-top:8px"><strong>第 2 问</strong>：根据第 1 问结果，在可信范围内再问一次同结构的问题确认。</p>
-          </div>
-          <div class="puzzle-answer">答案：用反事实自指问题，天使和魔鬼的回答等价于事实，两问内可锁定天使</div>
-          <div class="puzzle-insight" style="margin-top:10px">精髓：魔鬼撒谎两次（对"你会回答"撒谎 + 对内容撒谎）= 双重否定 = 真话。这让天使和魔鬼的可信度等价，从而绕过凡人的干扰。</div>
-        </div>
-      </div>
-
-      <!-- P31 疯狗问题 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">31</span>
-          <span class="puzzle-title">疯狗问题 — 第几天响枪有几条疯狗</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>村里有 50 条狗，其中有若干条疯狗（至少 1 条）。每个村民能看到其他所有狗是否疯，看不到自己的。推理出自己的狗是疯狗，必须当天开枪打死它。<strong>第 1、2 天没有枪声，第 3 天响起了枪声。</strong>问村里有几条疯狗？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>与红眼岛（#17）本质相同，归纳推理：</p>
-            <ul style="margin-top:8px">
-              <li>1 条疯狗 → 主人看到 0 条，<strong>第 1 天</strong>开枪</li>
-              <li>2 条疯狗 → 各主人看到 1 条，等第 1 天无枪声，第 2 天开枪</li>
-              <li>3 条疯狗 → 各主人看到 2 条，等第 2 天无枪声，<strong>第 3 天</strong>开枪</li>
-            </ul>
-          </div>
-          <div class="puzzle-answer">答案：3 条疯狗（第 n 天响枪 → 有 n 条疯狗）</div>
-          <div class="puzzle-insight" style="margin-top:10px">这是公共知识推理的第三个变体（红眼岛 / 村庄不忠丈夫 / 疯狗）。形式不同，本质一样：沉默传递信息，每一天的"没有枪声"排除了"只有 n 条"的情况，推动下一天的行动。</div>
-        </div>
-      </div>
-
-      <!-- P32 海盗分金币 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">32</span>
-          <span class="puzzle-title">海盗分金币 — 逆向归纳法</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>5 个海盗（1–5 号）抢得 100 枚金币。按编号依次提方案，<strong>超过半数赞成</strong>则通过，否则提案者被扔下海。优先级：①保命 ②多拿金币 ③喜欢看别人死（可投反对）。问 1 号会如何分配？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路（逆向归纳）</div>
-            <table class="puzzle-table" style="margin-top:8px">
-              <tr><th>剩余人数</th><th>方案</th><th>分析</th></tr>
-              <tr><td>只剩 5 号</td><td>5号:100</td><td>必然通过</td></tr>
-              <tr><td>剩 4、5 号</td><td>4号必死</td><td>5号永远反对，4号只有 1 票</td></tr>
-              <tr><td>剩 3、4、5 号</td><td>3:99, 4:0, 5:1</td><td>4号支持（否则自己死）；5号拿 1 枚比之后独吞差但 4 号死了 5 号得 100，5 号会反对……重算：5号若拒绝，下轮 4 号必死，5 号得 100；所以 3 号需给 5 号 &gt;0，给 1 枚即可。4 号只要活命就赞成，给 0 枚</td></tr>
-              <tr><td>剩 2–5 号</td><td>2:97, 3:0, 4:1, 5:2</td><td>收买 4（上轮得 0，给 1）和 5（上轮得 1，给 2）</td></tr>
-              <tr><td>全部 5 人</td><td><strong>1:96, 2:0, 3:1, 4:0, 5:3</strong></td><td>收买 3（上轮得 0，给 1）和 5（上轮得 2，给 3）</td></tr>
-            </table>
-          </div>
-          <div class="puzzle-answer">答案：1 号提案 — 1号:96, 2号:0, 3号:1, 4号:0, 5号:3，获 1+3+5 = 3 票通过</div>
-          <div class="puzzle-insight" style="margin-top:10px">逆向归纳：从最后一步往前推，每一步都收买"在下一轮会拿到最少的人"，用比他下一轮多 1 枚的价格买票，成本最低。</div>
-        </div>
-      </div>
-
-      <!-- P33 圆周三点锐角三角形 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">33</span>
-          <span class="puzzle-title">圆周三点构成锐角三角形的概率</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>在圆周上<strong>随机</strong>取三个点，这三个点构成<strong>锐角三角形</strong>的概率是多少？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>三角形为锐角三角形 ⟺ 三顶点所在圆弧，<strong>每段弧都小于半圆</strong>（&lt;180°）。</p>
-            <p style="margin-top:8px">设三段弧长度为 x、y、z（归一化，x+y+z=1）。在均匀分布下，(x,y,z) 均匀分布于单纯形 x+y+z=1, x,y,z≥0。</p>
-            <p style="margin-top:8px">需要 x &lt; 1/2，y &lt; 1/2，z &lt; 1/2。满足条件的区域占总面积的 <strong>1/4</strong>（三个约束各排除 1/4，交集剩 1/4）。</p>
-          </div>
-          <div class="puzzle-answer">答案：概率为 1/4</div>
-          <div class="puzzle-insight" style="margin-top:10px">直觉：三点随机取，有相当大概率某段弧超过半圆（即某角是钝角）。只有 1/4 的情况下三段弧都不超过半圆，才是锐角三角形。</div>
-        </div>
-      </div>
-
-      <!-- P34 男女比例悖论 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">34</span>
-          <span class="puzzle-title">男女比例悖论 — 策略不改变概率</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>一个国家每个家庭持续生孩子，直到生出<strong>第一个男孩</strong>为止。每次生育男女概率均为 1/2，各次独立。问这个国家最终<strong>男女比例</strong>是多少？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>直觉陷阱：有些家庭生了很多女儿，感觉女多男少。实际上：</p>
-            <table class="puzzle-table" style="margin-top:8px">
-              <tr><th>家庭类型</th><th>概率</th><th>男孩数</th><th>女孩数</th></tr>
-              <tr><td>男</td><td>1/2</td><td>1</td><td>0</td></tr>
-              <tr><td>女男</td><td>1/4</td><td>1</td><td>1</td></tr>
-              <tr><td>女女男</td><td>1/8</td><td>1</td><td>2</td></tr>
-              <tr><td>…</td><td>…</td><td>1</td><td>…</td></tr>
-            </table>
-            <p style="margin-top:8px">每个家庭恰好生 <strong>1 个男孩</strong>，期望女孩数 = Σ k×(1/2)^(k+1) = <strong>1</strong>。</p>
-          </div>
-          <div class="puzzle-answer">答案：男女比例为 1:1</div>
-          <div class="puzzle-insight" style="margin-top:10px">无论生育策略如何，只要每次生育概率固定为 1/2，总体男女比例就是 1:1。策略只影响<strong>家庭规模</strong>，不影响总体性别比。每次生育都是独立事件，策略无法改变概率。</div>
-        </div>
-      </div>
-
-      <!-- P35 费米估算理发店 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">35</span>
-          <span class="puzzle-title">费米估算 — 城市理发店数量</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>如何估算你所在城市的理发店数量？（以北京为例）</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>费米估算：从需求侧出发，逐步拆解。</p>
-            <table class="puzzle-table" style="margin-top:8px">
-              <tr><th>参数</th><th>估算值</th><th>依据</th></tr>
-              <tr><td>北京人口</td><td>2200 万</td><td>常识</td></tr>
-              <tr><td>人均理发频率</td><td>每月 1 次</td><td>男性频繁，女性较少，取均值</td></tr>
-              <tr><td>全市理发次数/月</td><td>2200 万次</td><td></td></tr>
-              <tr><td>每店每天接客</td><td>约 20 人次</td><td>2 位师傅 × 10 人/天</td></tr>
-              <tr><td>每店每月接客</td><td>600 人次</td><td>20 × 30</td></tr>
-              <tr><td>理发店数量</td><td><strong>≈ 3.7 万家</strong></td><td>2200万 ÷ 600</td></tr>
-            </table>
-          </div>
-          <div class="puzzle-answer">答案：约 3–4 万家（实际北京约 4–6 万家，量级正确）</div>
-          <div class="puzzle-insight" style="margin-top:10px">费米估算考察<strong>结构化拆解能力</strong>和<strong>数量级判断</strong>，不要求精确。面试时展示：合理假设 → 逐步推导 → 自我校验（和常识对比）。</div>
-        </div>
-      </div>
-
-      <!-- P36 64匹马找前4名 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">36</span>
-          <span class="puzzle-title">64 匹马找前 4 名 — 字节跳动高频题</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p><strong>64 匹马</strong>，<strong>8 条赛道</strong>，每次同时跑 8 匹，无计时器（只能比较名次）。最少几次找出<strong>前 4 名</strong>？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <table class="puzzle-table" style="margin-top:8px">
-              <tr><th>轮次</th><th>内容</th><th>目的</th></tr>
-              <tr><td>第 1–8 次</td><td>分 8 组各跑一次</td><td>每组排出名次</td></tr>
-              <tr><td>第 9 次</td><td>8 组冠军同场</td><td>确定<strong>全场第 1 名</strong>，确定候选组</td></tr>
-            </table>
-            <p style="margin-top:8px">第 9 次后，第 5–8 名的组<strong>全部淘汰</strong>。候选（需决出第 2/3/4 名）：</p>
-            <ul>
-              <li>G1 组 2、3、4 名（3 匹）</li>
-              <li>G2 组 1、2、3 名（3 匹）</li>
-              <li>G3 组 1、2 名（2 匹）</li>
-              <li>G4 组 1 名（1 匹）</li>
-              <li>共 <strong>9 匹</strong>，超出 8 条赛道</li>
-            </ul>
-            <p style="margin-top:8px"><strong>第 10 次</strong>：从 9 匹中取 8 匹跑（去掉 G1 组第 4 名——其前面已有 3 匹保证比它快），前 3 名即全场 2/3/4 名。</p>
-          </div>
-          <div class="puzzle-answer">答案：10 次（8 次分组 + 1 次冠军赛 + 1 次 8 马决赛）</div>
-          <div class="puzzle-insight" style="margin-top:10px">与 25 匹找前 3（题 #7）的区别：前 4 名候选更多（9 匹 vs 5 匹），8 条赛道恰好能一次跑完 8 匹，去掉必然不进前 4 的那 1 匹后刚好 8 匹。</div>
-        </div>
-      </div>
-
-      <!-- P37 桌上放硬币 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">37</span>
-          <span class="puzzle-title">桌上放硬币 — 中心对称必胜策略</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>两人轮流在一张<strong>矩形桌子</strong>上放硬币（相同大小，不可重叠，不可超出桌面），<strong>谁最后放不下谁输</strong>。先手有没有必胜策略？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>先手必胜，策略为<strong>中心对称</strong>：</p>
-            <ol style="margin-top:8px">
-              <li>先手第一步将硬币放在<strong>桌子正中心</strong></li>
-              <li>之后，无论后手在哪里放，先手都在<strong>关于桌子中心对称的位置</strong>放一枚</li>
-            </ol>
-            <p style="margin-top:8px">为什么必胜：矩形桌子关于中心点对称，若后手能放下，对称位置<strong>一定也能放下</strong>（空间对称保证）。因此先手永远有位置，后手先无处放则输。</p>
-          </div>
-          <div class="puzzle-answer">答案：先手必胜。策略：第一步占中心，之后始终走中心对称位置</div>
-          <div class="puzzle-insight" style="margin-top:10px">推广：任何具有中心对称性的桌面（圆形、正多边形等）都适用。本质是<strong>策略窃取（Strategy Stealing）</strong>：先手通过占据对称轴，将后手的每一步转化为自己的合法应对。</div>
-        </div>
-      </div>
-
-      <!-- P14 水桶量水 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">14</span>
-          <span class="puzzle-title">水桶量水 — 3升与5升量出4升</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>有一个 <strong>3 升</strong>的桶和一个 <strong>5 升</strong>的桶，水源无限，没有刻度。如何量出恰好 <strong>4 升</strong>水？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <table class="puzzle-table" style="margin-top:8px">
-              <tr><th>步骤</th><th>操作</th><th>3升桶</th><th>5升桶</th></tr>
-              <tr><td>①</td><td>装满 5升桶</td><td>0</td><td>5</td></tr>
-              <tr><td>②</td><td>5升桶倒入 3升桶</td><td>3</td><td>2</td></tr>
-              <tr><td>③</td><td>倒空 3升桶</td><td>0</td><td>2</td></tr>
-              <tr><td>④</td><td>5升桶剩余 2升倒入 3升桶</td><td>2</td><td>0</td></tr>
-              <tr><td>⑤</td><td>装满 5升桶</td><td>2</td><td>5</td></tr>
-              <tr><td>⑥</td><td>5升桶倒入 3升桶（只能倒 1升）</td><td>3</td><td><strong>4</strong></td></tr>
-            </table>
-          </div>
-          <div class="puzzle-answer">答案：4升水在 5升桶中，共 6 步</div>
-          <div class="puzzle-insight" style="margin-top:10px">推广：若两桶容量<strong>互质</strong>（最大公因数为 1），则理论上可以量出 1 到两桶容量之和之间的任意整数升。</div>
-        </div>
-      </div>
-
-      <!-- P15 电灯开关 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">15</span>
-          <span class="puzzle-title">电灯开关 — 热/冷辨识三盏灯</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>房间外有 <strong>3 个开关</strong>，分别控制房间内的 <strong>3 盏灯</strong>，初始全部关闭。你<strong>只能进入房间一次</strong>，进去前可以任意拨动开关，进去后不能再出来操作。如何确定每个开关对应哪盏灯？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>利用灯泡的两种状态：<strong>亮/灭（电）</strong>和<strong>冷/热（余温）</strong>，让三盏灯携带不同信息。</p>
-            <ul style="margin-top:8px">
-              <li>打开<strong>开关 1</strong>，等待 <strong>5 分钟</strong></li>
-              <li>关闭<strong>开关 1</strong>，打开<strong>开关 2</strong></li>
-              <li>立即进入房间</li>
-            </ul>
-            <p style="margin-top:8px">判断：<strong>亮着的灯</strong> → 开关 2；<strong>灭但热的灯</strong> → 开关 1；<strong>灭且冷的灯</strong> → 开关 3。</p>
-          </div>
-          <div class="puzzle-answer">答案：利用"亮/灭"和"热/冷"两个维度区分三盏灯，一次进入即可确定</div>
-          <div class="puzzle-insight" style="margin-top:10px">本质是信息编码：2 个布尔维度可区分 4 种状态，足以覆盖 3 盏灯。当"只能操作一次"是约束时，优先寻找额外可利用的物理维度。</div>
-        </div>
-      </div>
-
-      <!-- P16 狼羊白菜 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">16</span>
-          <span class="puzzle-title">狼羊白菜渡河 — 约束搜索</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>农夫需要将<strong>一只狼、一只羊、一棵白菜</strong>运过河，船每次只能带<strong>一样</strong>。农夫不在时：狼会吃羊，羊会吃白菜。如何让三样东西都安全过河？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <table class="puzzle-table" style="margin-top:8px">
-              <tr><th>步骤</th><th>带走</th><th>此岸</th><th>对岸</th></tr>
-              <tr><td>①</td><td>带羊过去</td><td>狼、白菜</td><td>羊</td></tr>
-              <tr><td>②</td><td>空船返回</td><td>狼、白菜</td><td>羊</td></tr>
-              <tr><td>③</td><td>带狼过去</td><td>白菜</td><td>狼、羊</td></tr>
-              <tr><td>④</td><td><strong>带羊返回（关键！）</strong></td><td>羊、白菜</td><td>狼</td></tr>
-              <tr><td>⑤</td><td>带白菜过去</td><td>羊</td><td>狼、白菜</td></tr>
-              <tr><td>⑥</td><td>空船返回</td><td>羊</td><td>狼、白菜</td></tr>
-              <tr><td>⑦</td><td>带羊过去</td><td>—</td><td>全部 ✓</td></tr>
-            </table>
-          </div>
-          <div class="puzzle-answer">答案：7 步，关键是第 4 步把羊带回来</div>
-          <div class="puzzle-insight" style="margin-top:10px">反直觉：把已过河的东西带回来，反而是最优解。把羊视为"唯一不能单独留下"的元素，其他对象两两无冲突，因此羊需要特殊处理。</div>
-        </div>
-      </div>
-
-      <!-- P17 红眼岛 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">17</span>
-          <span class="puzzle-title">红眼岛 — 公共知识的威力</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>一座岛上有 <strong>100 个人，全部是红眼睛</strong>。每人能看到其他所有人的眼睛颜色，但看不到自己的，也不能讨论眼睛颜色。若某人确认自己是红眼睛，必须当晚离岛。某天外来者公开宣布："<strong>你们中至少有一个人是红眼睛。</strong>" 之后会发生什么？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>外来者的话看似废话（每人已能看到 99 双红眼），但它引入了<strong>公共知识</strong>——每个人都知道其他人也听到了这句话。</p>
-            <p style="margin-top:8px">归纳法：</p>
-            <ul>
-              <li><strong>n=1</strong>：红眼人看到 0 个红眼，立刻知道自己是，<strong>第 1 天</strong>离岛</li>
-              <li><strong>n=2</strong>：每人看到 1 个红眼，等第 1 天——对方没走，说明对方也看到了红眼，即自己也是，<strong>第 2 天</strong>同时离岛</li>
-              <li><strong>n=100</strong>：<strong>第 100 天</strong>，100 人全部同时离岛</li>
-            </ul>
-          </div>
-          <div class="puzzle-answer">答案：第 100 天，100 人全部同时离岛</div>
-          <div class="puzzle-insight" style="margin-top:10px">外来者的话并非废话，它建立了<strong>公共知识</strong>（每人知道每人知道……至少有 1 个红眼）。而之前只有<strong>共有知识</strong>（每人各自知道至少 99 个红眼，但这不是公共知识）。两者差距引发了连锁推理。</div>
-        </div>
-      </div>
-
-      <!-- P18 掰巧克力 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">18</span>
-          <span class="puzzle-title">掰巧克力 — 操作次数不变量</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>一块 <strong>m × n</strong> 的巧克力，沿格线掰开，每次只能掰<strong>一块</strong>（不能叠放同时掰多块）。最少需要掰<strong>几次</strong>才能全部分成 1×1 的单块？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p>用<strong>不变量</strong>思考：每掰一次，块数增加 <strong>1</strong>。</p>
-            <ul style="margin-top:8px">
-              <li>初始：1 块</li>
-              <li>目标：m × n 块</li>
-              <li>需要增加：m × n − 1 块</li>
-            </ul>
-            <p style="margin-top:8px">无论以何种顺序掰，都需要恰好 <strong>m × n − 1 次</strong>，与策略无关。</p>
-          </div>
-          <div class="puzzle-answer">答案：m × n − 1 次</div>
-          <div class="puzzle-insight" style="margin-top:10px">陷阱：试图寻找"更优策略"——实际上所有策略次数相同，因为每次操作恰好让块数 +1，是严格不变量。遇到"最少几步"类问题，先想：有没有每步都必然发生的量？</div>
-        </div>
-      </div>
-
-      <!-- P19 鸽巢原理 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">19</span>
-          <span class="puzzle-title">鸽巢原理 — 北京人头发数</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>北京有 <strong>2000 万人口</strong>，每人头发数量在 0 到 <strong>150 万根</strong>之间。是否一定存在至少两个人头发数量完全相同？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p><strong>鸽巢原理（抽屉原理）</strong>：如果 n 个物品放入 m 个容器，且 n &gt; m，则至少有一个容器里有 2 个以上的物品。</p>
-            <ul style="margin-top:8px">
-              <li>头发数量：0, 1, 2, …, 1500000，共 <strong>150 万 + 1 = 1500001 种</strong>（容器数）</li>
-              <li>人口：<strong>2000 万</strong>（物品数）</li>
-              <li>2000 万 >> 150 万，必然存在至少两人头发数完全相同</li>
-            </ul>
-          </div>
-          <div class="puzzle-answer">答案：一定存在，且至少有约 13 人头发数量相同（2000万 ÷ 150万 ≈ 13.3）</div>
-          <div class="puzzle-insight" style="margin-top:10px">鸽巢原理应用：生日问题、哈希碰撞、抽屉里的袜子……凡是"可能性有限但对象更多"的场景都能用。它的力量在于：无需知道具体分布，仅靠计数就能得出确定性结论。</div>
-        </div>
-      </div>
-
-      <!-- P20 蚂蚁爬杆 -->
-      <div class="puzzle-card">
-        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
-          <span class="puzzle-num">20</span>
-          <span class="puzzle-title">蚂蚁爬杆 — 相遇等效穿过</span>
-          <button class="puzzle-toggle">展开</button>
-        </div>
-        <div class="hint-block puzzle-body">
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">题目</div>
-            <p>一根长 <strong>1 米（100 cm）</strong>的细杆，<strong>100 只蚂蚁</strong>随机分布在杆上，每只蚂蚁以 <strong>1 cm/s</strong> 的速度向左或向右爬行，到达端点后掉落。两只蚂蚁相遇时，各自<strong>掉头</strong>反向爬。问：所有蚂蚁都掉落所需的<strong>最长时间</strong>是多少？</p>
-          </div>
-          <div class="puzzle-section">
-            <div class="puzzle-section-label">关键思路</div>
-            <p><strong>关键洞察</strong>：两只蚂蚁相遇掉头，等价于两只蚂蚁<strong>互相穿过</strong>——因为蚂蚁完全相同，无法区分。</p>
-            <p style="margin-top:8px">因此，每只蚂蚁的运动等价于一个"信号"从初始位置向某方向匀速传播，直到端点为止。所有信号独立，互不干扰。</p>
-            <p style="margin-top:8px">最坏情况：某只蚂蚁距离最远端点 <strong>100 cm</strong>，需要 <strong>100 秒</strong>。</p>
-          </div>
-          <div class="puzzle-answer">答案：最长时间为 100 秒</div>
-          <div class="puzzle-insight" style="margin-top:10px">模型简化的威力：把"掉头"换成"穿过"，复杂的多体碰撞问题瞬间变成 100 个独立的单体运动问题。寻找等价变换往往是解决复杂系统问题的关键。</div>
-        </div>
       </div>
 
     </section>
