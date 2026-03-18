@@ -379,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题 · 59 智力题 · 5 系统设计</span>
+  <span class="badge">9 题 · 59 智力题 · 6 系统设计</span>
 </header>
 
 <div class="layout">
@@ -2668,6 +2668,138 @@
             </table>
           </div>
           <div class="sd-answer">关键设计：顺序写 + Partition 并行是 Kafka 高吞吐的核心。Consumer Offset 由消费者自己维护，使得重放（replay）和 at-least-once 投递天然支持。</div>
+        </div>
+      </div>
+
+      <!-- SD6 分布式ID生成器 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">6</span>
+          <span class="sd-title">设计分布式 ID 生成器</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个分布式 ID 生成服务，满足：<strong>全局唯一</strong>、<strong>趋势递增</strong>（有利于 B+ 树索引写入）、<strong>高性能</strong>（单机 &gt;10 万 QPS）、<strong>高可用</strong>（无单点）、ID 不暴露业务信息（不可被枚举）。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">方案对比</div>
+            <table class="sd-table">
+              <tr><th>方案</th><th>唯一性</th><th>趋势递增</th><th>性能</th><th>主要缺点</th></tr>
+              <tr>
+                <td><strong>UUID v4</strong></td>
+                <td>✅ 全局唯一</td>
+                <td>❌ 完全随机</td>
+                <td>✅ 本地生成，极快</td>
+                <td>128 bit，字符串存储大；随机写导致 B+ 树页分裂频繁，写性能差；不含时间，排序无意义</td>
+              </tr>
+              <tr>
+                <td><strong>DB 自增 ID</strong></td>
+                <td>✅（单库）</td>
+                <td>✅ 严格递增</td>
+                <td>❌ 受 DB 并发限制</td>
+                <td>单点瓶颈；多库步长方案（每台步长 N、起始不同）可扩展，但扩容麻烦，ID 暴露分库规模</td>
+              </tr>
+              <tr>
+                <td><strong>Redis INCR</strong></td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>✅ 单线程原子，~10w QPS</td>
+                <td>Redis 持久化（AOF）有丢失风险；重启后需从持久化值恢复，否则 ID 重复；引入额外依赖</td>
+              </tr>
+              <tr>
+                <td><strong>Snowflake</strong></td>
+                <td>✅</td>
+                <td>✅ 趋势递增</td>
+                <td>✅ 本地生成，极快</td>
+                <td>依赖系统时钟；<strong>时钟回拨</strong>会导致 ID 重复（核心问题）；workerId 需外部分配</td>
+              </tr>
+              <tr>
+                <td><strong>美团 Leaf</strong></td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>✅ 号段缓存，内存发号</td>
+                <td>号段模式：DB 宕机时缓存内 ID 可继续使用；Snowflake 模式：用 ZK 分配 workerId，解决时钟回拨</td>
+              </tr>
+              <tr>
+                <td><strong>百度 UidGenerator</strong></td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>✅ RingBuffer 预生成</td>
+                <td>基于 Snowflake 变体，workerId 用 DB 分配（应用启动注册），RingBuffer 异步填充消除毛刺</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">Snowflake 结构详解</div>
+            <div class="sd-code">64 bit ID 结构：
+┌─────────┬──────────────────────────────────────┬──────────────┬────────────────┐
+│ 符号位  │         时间戳（毫秒）                 │  workerId    │   序列号       │
+│  1 bit  │           41 bit                     │   10 bit     │   12 bit       │
+└─────────┴──────────────────────────────────────┴──────────────┴────────────────┘
+                                                 ↑                ↑
+                                        最多 1024 台机器   同毫秒内最多 4096 个 ID
+
+• 41 bit 时间戳：相对自定义 epoch（如 2020-01-01），可用约 69 年
+• 10 bit workerId：5 bit datacenter + 5 bit worker，共 1024 个节点
+• 12 bit 序列号：同一毫秒内自增，超过 4095 则等待下一毫秒
+• 单机 QPS 上限：1000ms × 4096 = 约 409.6 万/秒</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">时钟回拨问题与解决方案</div>
+            <ul>
+              <li><strong>问题根因</strong>：NTP 时间同步可能让系统时钟往回跳，导致生成的 ID 时间戳小于上次 ID，破坏唯一性</li>
+              <li><strong>方案 1 — 拒绝服务</strong>：检测到回拨直接抛错（回拨 &lt; 2ms 时等待追上，&gt; 2ms 直接报警）。简单但影响可用性</li>
+              <li><strong>方案 2 — 扩展位借用</strong>：将 workerId 的高位几 bit 作为"时钟回拨次数"计数器，每次回拨自增该计数，保证 ID 仍全局唯一（美团 Leaf Snowflake 思路）</li>
+              <li><strong>方案 3 — 使用逻辑时钟</strong>：不依赖系统时钟，改用单调递增的逻辑时钟（如 ZooKeeper 的 zxid），彻底消除回拨风险</li>
+              <li><strong>方案 4 — 号段模式兜底</strong>：Snowflake 出问题时降级为 DB 号段模式（双 buffer，提前预取），保证高可用</li>
+            </ul>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">美团 Leaf 双模式</div>
+            <table class="sd-table">
+              <tr><th>模式</th><th>原理</th><th>特点</th></tr>
+              <tr>
+                <td>号段模式（Segment）</td>
+                <td>DB 表维护每个 bizTag 的 max_id 和 step；服务批量取号（如一次取 1000 个），内存中依次发放；剩余量低于 10% 时异步预取下一段</td>
+                <td>DB 宕机后内存中仍有号可用；双 buffer 消除取号延迟毛刺；ID 连续但会有跳跃（重启丢失当前号段剩余量）</td>
+              </tr>
+              <tr>
+                <td>Snowflake 模式</td>
+                <td>用 ZooKeeper 持久节点存储 workerId，服务启动时注册获取，并定期上报心跳时间戳</td>
+                <td>ZK 宕机时本地缓存 workerId 可继续运行；利用上报的时间戳检测时钟回拨，回拨超阈值则拒绝发号</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">推荐方案（生产选型）</div>
+            <div class="sd-code">场景一：中小规模，追求简单
+  → Redis INCR + 号段批量取（每次取 1000），应用内存顺序发放
+  → 优点：无需额外服务，接入成本低
+  → 注意：AOF 持久化 + 每次取号后立即持久化（fsync）防丢失
+
+场景二：大规模，追求极致性能
+  → 部署美团 Leaf（号段模式 + Snowflake 模式双保险）
+  → 号段模式作为主力，Snowflake 作为高性能补充
+  → workerId 通过 ZK 分配，规避手动管理
+
+场景三：容器 / K8s 环境，动态扩缩容
+  → 百度 UidGenerator：DB 注册 workerId（Pod 启动时写 DB 获取唯一 workerId）
+  → RingBuffer 异步预生成 ID，填充率低时后台线程补充，彻底消除阻塞
+
+通用原则：
+  1. 业务 ID 不要直接用 DB 自增主键对外暴露（可被枚举订单量）
+  2. 趋势递增 > 严格递增（允许同毫秒内乱序，只要整体趋势递增即可）
+  3. 时钟回拨处理：小回拨等待，大回拨降级到号段模式</div>
+          </div>
+
+          <div class="sd-answer">核心考点：Snowflake 的 64 bit 拆分结构（1+41+10+12）、时钟回拨的三种解法（等待/借位/逻辑时钟）、Leaf 号段模式的双 buffer 设计。面试中能完整画出 Snowflake bit 布局 + 说清楚时钟回拨解法，基本能拿满分。</div>
         </div>
       </div>
 
