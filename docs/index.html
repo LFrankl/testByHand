@@ -379,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题 · 59 智力题 · 6 系统设计</span>
+  <span class="badge">9 题 · 59 智力题 · 7 系统设计</span>
 </header>
 
 <div class="layout">
@@ -2800,6 +2800,107 @@
           </div>
 
           <div class="sd-answer">核心考点：Snowflake 的 64 bit 拆分结构（1+41+10+12）、时钟回拨的三种解法（等待/借位/逻辑时钟）、Leaf 号段模式的双 buffer 设计。面试中能完整画出 Snowflake bit 布局 + 说清楚时钟回拨解法，基本能拿满分。</div>
+        </div>
+      </div>
+
+      <!-- SD7 Feed 流 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">7</span>
+          <span class="sd-title">设计 Feed 流系统</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个通用 Feed 流系统（类微博/朋友圈/抖音）。用户关注其他用户后，能在首页看到关注者按时间倒序排列的内容流。要求：日活 1 亿，写 QPS ~5 万，读 QPS ~50 万，支持普通用户和大 V（千万粉），延迟 &lt;200ms。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">核心模型</div>
+            <ul>
+              <li><strong>发布（Publish）</strong>：内容生产者写入一条 Post，包含 post_id、user_id、content、ts</li>
+              <li><strong>订阅（Subscribe）</strong>：关注关系存储，关注者能看到被关注者的内容</li>
+              <li><strong>拉取（Pull / Timeline）</strong>：读取当前用户的 Feed 列表，按时间倒序</li>
+            </ul>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">三种 Fanout 模型对比</div>
+            <table class="sd-table">
+              <tr><th>模型</th><th>原理</th><th>读延迟</th><th>写代价</th><th>适用场景</th></tr>
+              <tr>
+                <td><strong>推模式（Push / 写扩散）</strong></td>
+                <td>发布时将 post_id 写入所有粉丝的 Timeline 缓存（Redis Sorted Set）</td>
+                <td>✅ 极低，直接读缓存</td>
+                <td>❌ 写放大 = 粉丝数；大 V 百万粉写百万次</td>
+                <td>普通用户（粉丝 &lt;1 万）</td>
+              </tr>
+              <tr>
+                <td><strong>拉模式（Pull / 读扩散）</strong></td>
+                <td>读取时查询当前用户关注列表，从每个人的发布表 union 最新内容，归并排序</td>
+                <td>❌ 高，关注 500 人需合并 500 路</td>
+                <td>✅ 发布无额外写入</td>
+                <td>关注数少、实时性要求高</td>
+              </tr>
+              <tr>
+                <td><strong>混合模式（Hybrid）</strong></td>
+                <td>普通用户走推模式；大 V 走拉模式；读取时合并两部分结果</td>
+                <td>✅ 可控</td>
+                <td>✅ 可控</td>
+                <td>✅ 生产主流方案（微博、Twitter）</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">推荐方案（混合模式）</div>
+            <div class="sd-code">【发布流程】
+用户发布 Post
+  → 写 MySQL post 表（post_id, uid, content, ts）
+  → 投 Kafka（topic: new_post）
+  → 消费者判断发布者粉丝数
+      粉丝数 ≤ 阈值（如 5 万）→ 推模式：
+        遍历粉丝列表，ZADD timeline:{fan_uid} score=ts post_id
+        Timeline 缓存只保留最近 N 条（ZREMRANGEBYRANK 裁剪）
+      粉丝数 > 阈值（大 V）→ 不扇出，仅写 post 表
+
+【读取流程】
+用户请求 Feed
+  Step 1：Redis ZREVRANGE timeline:{uid} 0 99   ← 获取普通关注者推来的 post_id
+  Step 2：查询关注的大 V 列表
+          对每个大 V：SELECT post_id FROM post WHERE uid=? AND ts > cursor LIMIT 20
+          （大 V 发布频率低，条数可控）
+  Step 3：归并排序两部分 post_id，按 ts 倒序取 Top 20
+  Step 4：批量 mget 帖子详情（Redis 缓存 + DB 兜底）
+  Step 5：返回结果，记录翻页游标（最后一条的 ts + post_id）</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">存储设计</div>
+            <table class="sd-table">
+              <tr><th>数据</th><th>存储</th><th>说明</th></tr>
+              <tr><td>Post 内容</td><td>MySQL（按 uid % N 分片）</td><td>post_id 用 Snowflake，含时间戳便于范围查询</td></tr>
+              <tr><td>关注关系</td><td>MySQL + Redis Set</td><td>follow:{uid} 存关注列表；粉丝数超阈值标记为大 V</td></tr>
+              <tr><td>Timeline 缓存</td><td>Redis Sorted Set</td><td>key=timeline:{uid}，score=ts，只存 post_id；TTL 7 天；最多保留 800 条</td></tr>
+              <tr><td>Post 详情缓存</td><td>Redis Hash / String</td><td>key=post:{post_id}，TTL 24h；热点帖子本地缓存</td></tr>
+              <tr><td>媒体资源</td><td>对象存储 + CDN</td><td>图片/视频不走 DB</td></tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">关键细节</div>
+            <ul>
+              <li><strong>大 V 阈值动态调整</strong>：粉丝数增长时从推模式迁移到拉模式；反向需补写 Timeline（批量回填）</li>
+              <li><strong>冷启动 / 新用户</strong>：Timeline 为空时，从关注列表拉取每人最新 3 条兜底，填充首屏</li>
+              <li><strong>已读游标（Cursor）分页</strong>：不用 offset 分页（数据插入导致漂移），用 <code>ts + post_id</code> 作游标，下一页查 <code>WHERE ts &lt; cursor_ts OR (ts = cursor_ts AND post_id &lt; cursor_id)</code></li>
+              <li><strong>Timeline 缓存穿透</strong>：用户长时间不活跃后 Timeline 过期，下次登录触发异步重建（查 DB 回填 Redis），首次请求走 DB 兜底</li>
+              <li><strong>热点帖子</strong>：大 V 爆款帖被百万用户同时拉取，Post 详情需本地缓存（JVM 级）+ Redis 多副本分散读压力</li>
+              <li><strong>实时推送</strong>：新 Post 到达时通过 WebSocket / APNs 推送通知，用户收到通知后触发拉取</li>
+            </ul>
+          </div>
+
+          <div class="sd-answer">核心权衡：推模式（低读延迟）vs 拉模式（低写代价）。生产环境一定是混合模式——普通用户推、大 V 拉。面试答出「大 V 阈值 + 混合 Fanout + 归并排序 + 游标分页」四点，基本覆盖考官预期。</div>
         </div>
       </div>
 
