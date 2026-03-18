@@ -1328,6 +1328,146 @@
         </div>
       </div>
 
+      <!-- P40 毒药与试纸 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">40</span>
+          <span class="puzzle-title">毒药与试纸 — 二进制编码（技术流）</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>1000 瓶药水，1 瓶毒药，10 张试纸。毒药滴上试纸 24 小时后变红，一张试纸可同时滴多瓶。只能做<strong>一轮</strong>测试，如何找出毒药？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>二进制编码（与题 #6 老鼠版本同构）：</p>
+            <ul style="margin-top:8px">
+              <li>将 1000 瓶编号 1–1000，转为二进制（最多 10 位）</li>
+              <li>第 i 张试纸滴入所有<strong>二进制第 i 位为 1</strong> 的瓶子</li>
+              <li>24 小时后，变红试纸的编号（1=红，0=不变）从高到低排列，得到的二进制数即为毒药编号</li>
+            </ul>
+            <p style="margin-top:8px">例：第 1、3、4 张变红 → 毒药编号 = 0b1101 = 13。10 张试纸可区分 2¹⁰ = 1024 种情况，覆盖 1000 瓶。</p>
+          </div>
+          <div class="puzzle-answer">答案：10 张试纸，按二进制编码分配，一轮即可确定</div>
+          <div class="puzzle-insight" style="margin-top:10px">与题 #6 老鼠版本的区别：媒介换成试纸，原理完全相同。核心思想：让每张试纸代表一个二进制位，变红/不变 = 1/0，读出毒药编号。</div>
+        </div>
+      </div>
+
+      <!-- P41 砝码称重 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">41</span>
+          <span class="puzzle-title">砝码称重 — 三进制最优解（谷歌经典）</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>天平称重，砝码可放两侧（与物体同侧或对侧）。要能称出 <strong>1–40 克</strong>所有整数重量，最少需要几个砝码？分别多重？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>砝码可放两侧 → 每个砝码有三种状态：+1（对侧）、0（不用）、-1（同侧），对应<strong>平衡三进制</strong>。</p>
+            <ul style="margin-top:8px">
+              <li>n 个砝码最多表示 (3ⁿ − 1)/2 个正整数重量</li>
+              <li>需覆盖 40：(3ⁿ − 1)/2 ≥ 40 → 3ⁿ ≥ 81 → n ≥ 4（3⁴ = 81）</li>
+              <li>砝码重量：<strong>1, 3, 9, 27</strong>（= 3⁰, 3¹, 3², 3³）</li>
+            </ul>
+            <p style="margin-top:8px">验证：2 = 3−1；5 = 9−3−1；40 = 27+9+3+1 ✓</p>
+          </div>
+          <div class="puzzle-answer">答案：4 个砝码，重量为 1g、3g、9g、27g</div>
+          <div class="puzzle-insight" style="margin-top:10px">若砝码只能放对侧（普通二进制），需要 1, 2, 4, 8, 16, 32 共 6 个才能覆盖 1–63。允许放同侧后，三进制让每个砝码的信息量从 1 位增加到 1.58 位，大幅减少所需数量。</div>
+        </div>
+      </div>
+
+      <!-- P42 无限网格找黑格 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">42</span>
+          <span class="puzzle-title">无限网格找黑格 — 螺旋遍历</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>无限大网格，从原点出发，每次移动上下左右相邻格。有一个黑色陷阱格，位置未知。设计策略<strong>保证有限步内找到</strong>，且最坏步数尽可能少。</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>随机游走不保证有限步内找到，必须<strong>系统性遍历</strong>。</p>
+            <p style="margin-top:8px"><strong>螺旋遍历策略</strong>：按曼哈顿距离从小到大，逐层螺旋覆盖所有格子。</p>
+            <ul style="margin-top:8px">
+              <li>距离原点曼哈顿距离 ≤ d 的格子共 2d² + 2d + 1 个</li>
+              <li>遍历完距离 ≤ d 所有格子，实际步数约 O(d²)（含折返）</li>
+              <li>这是<strong>最优的</strong>：距离 d 内有 O(d²) 个格子都需被排除</li>
+            </ul>
+            <p style="margin-top:8px">若黑格在距离 d 处，最坏步数 = O(d²)。</p>
+          </div>
+          <div class="puzzle-answer">答案：螺旋遍历，从原点按曼哈顿距离逐层扩展，最坏步数 O(d²)</div>
+          <div class="puzzle-insight" style="margin-top:10px">关键：无限空间中必须有系统性策略，不能随机。螺旋遍历是直觉上最自然的方案，也是信息论意义下的最优解——步数与需要排除的格子数同阶。</div>
+        </div>
+      </div>
+
+      <!-- P43 微信红包算法 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">43</span>
+          <span class="puzzle-title">微信红包分配算法 — 二倍均值法</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>微信红包：总金额固定，n 人抢。设计算法使：① 每人期望金额相等；② 先抢不占系统性优势；③ 每人至少得 0.01 元。</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>朴素方案（有缺陷）</strong>：先抢的人随机取 [0, 剩余金额]，最后一人拿剩余。先抢期望 = 剩余额/2，越早越占优。</p>
+            <p style="margin-top:8px"><strong>二倍均值法</strong>：每次从剩余金额中随机抽取，范围为：</p>
+            <p style="margin-top:4px; padding: 8px; background:#F3F4F6; border-radius:4px; font-family:monospace">当前金额 = random(0.01,  剩余金额/剩余人数 × 2)</p>
+            <ul style="margin-top:8px">
+              <li>每次期望 ≈ 剩余均值（= 总额/n，忽略最小值 0.01）</li>
+              <li>抢走期望后，剩余均值不变，下一个人的期望也等于总额/n</li>
+              <li>先后顺序无系统性优劣</li>
+              <li>最后一人直接拿剩余，可能偏高也可能偏低</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：二倍均值法——每次从 [0.01, 剩余均值×2] 均匀随机取值，期望相等，先后无优劣</div>
+          <div class="puzzle-insight" style="margin-top:10px">面试延伸：若要让红包金额服从正态分布怎么设计？若要限制最大金额不超过总额的 X% 怎么办？实际微信红包还考虑了并发抢包的原子性问题（预分配 vs 实时计算）。</div>
+        </div>
+      </div>
+
+      <!-- P44 电梯调度 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">44</span>
+          <span class="puzzle-title">电梯调度分组策略 — 楼层分段优化</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>40 层写字楼，4 部电梯，早高峰全部从 1 楼上行，人员分布均匀。如何分配电梯负责的楼层，使<strong>平均等待时间最短</strong>？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>核心原则：让每部电梯承担的 <strong>"人×层数"大致相等</strong>（即每部电梯的总工作量均衡）。</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>电梯</th><th>负责楼层</th><th>特点</th></tr>
+              <tr><td>1 号</td><td>2–10 层</td><td>低层快速往返，班次最密</td></tr>
+              <tr><td>2 号</td><td>11–20 层</td><td>中低层</td></tr>
+              <tr><td>3 号</td><td>21–30 层</td><td>中高层</td></tr>
+              <tr><td>4 号</td><td>31–40 层</td><td>高层，单程最长</td></tr>
+            </table>
+            <p style="margin-top:8px">若实际人流低层更密集，可将分割点前移：如 2–8 / 9–18 / 19–29 / 30–40，让低层电梯负责更少楼层以提高班次频率。</p>
+          </div>
+          <div class="puzzle-answer">答案：按楼层均匀分段（每电梯约 10 层），根据实际人流分布调整分割点，使各电梯"人×层数"均衡</div>
+          <div class="puzzle-insight" style="margin-top:10px">延伸思考：① 是否应该有电梯只停奇数层/偶数层？② 午高峰双向流量如何调度？③ 实际系统用强化学习动态调度（如 ThyssenKrupp MULTI）。面试考察的是结构化分析能力，不要求最优解。</div>
+        </div>
+      </div>
+
       <!-- P38 100盏灯泡 -->
       <div class="puzzle-card">
         <div class="puzzle-card-header" onclick="togglePuzzle(this)">
