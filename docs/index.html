@@ -1328,6 +1328,234 @@
         </div>
       </div>
 
+      <!-- P30 天使与魔鬼 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">30</span>
+          <span class="puzzle-title">天使与魔鬼 — 两问找出天使</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>三个人 A、B、C：一人只说真话（天使），一人只说假话（魔鬼），一人有时真有时假（凡人）。只能问<strong>两个是非题</strong>，找出谁是天使。</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>核心技巧：<strong>反事实自指问题</strong>——"如果我问你 X，你会回答'是'吗？"</p>
+            <ul style="margin-top:8px">
+              <li>天使：直接如实回答（与直接问 X 等价）</li>
+              <li>魔鬼：撒谎两次，双重否定，<strong>结果与天使一样</strong>（等价于事实）</li>
+              <li>凡人：不可预测</li>
+            </ul>
+            <p style="margin-top:8px"><strong>第 1 问</strong>（问 A）："如果我问你'B 是天使吗'，你会回答'是'吗？"</p>
+            <ul>
+              <li>A 是天使或魔鬼 → 答案可信，等价于"B 是否天使"</li>
+              <li>A 是凡人 → 答案不可信，但第 2 问可换人</li>
+            </ul>
+            <p style="margin-top:8px"><strong>第 2 问</strong>：根据第 1 问结果，在可信范围内再问一次同结构的问题确认。</p>
+          </div>
+          <div class="puzzle-answer">答案：用反事实自指问题，天使和魔鬼的回答等价于事实，两问内可锁定天使</div>
+          <div class="puzzle-insight" style="margin-top:10px">精髓：魔鬼撒谎两次（对"你会回答"撒谎 + 对内容撒谎）= 双重否定 = 真话。这让天使和魔鬼的可信度等价，从而绕过凡人的干扰。</div>
+        </div>
+      </div>
+
+      <!-- P31 疯狗问题 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">31</span>
+          <span class="puzzle-title">疯狗问题 — 第几天响枪有几条疯狗</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>村里有 50 条狗，其中有若干条疯狗（至少 1 条）。每个村民能看到其他所有狗是否疯，看不到自己的。推理出自己的狗是疯狗，必须当天开枪打死它。<strong>第 1、2 天没有枪声，第 3 天响起了枪声。</strong>问村里有几条疯狗？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>与红眼岛（#17）本质相同，归纳推理：</p>
+            <ul style="margin-top:8px">
+              <li>1 条疯狗 → 主人看到 0 条，<strong>第 1 天</strong>开枪</li>
+              <li>2 条疯狗 → 各主人看到 1 条，等第 1 天无枪声，第 2 天开枪</li>
+              <li>3 条疯狗 → 各主人看到 2 条，等第 2 天无枪声，<strong>第 3 天</strong>开枪</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：3 条疯狗（第 n 天响枪 → 有 n 条疯狗）</div>
+          <div class="puzzle-insight" style="margin-top:10px">这是公共知识推理的第三个变体（红眼岛 / 村庄不忠丈夫 / 疯狗）。形式不同，本质一样：沉默传递信息，每一天的"没有枪声"排除了"只有 n 条"的情况，推动下一天的行动。</div>
+        </div>
+      </div>
+
+      <!-- P32 海盗分金币 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">32</span>
+          <span class="puzzle-title">海盗分金币 — 逆向归纳法</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>5 个海盗（1–5 号）抢得 100 枚金币。按编号依次提方案，<strong>超过半数赞成</strong>则通过，否则提案者被扔下海。优先级：①保命 ②多拿金币 ③喜欢看别人死（可投反对）。问 1 号会如何分配？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路（逆向归纳）</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>剩余人数</th><th>方案</th><th>分析</th></tr>
+              <tr><td>只剩 5 号</td><td>5号:100</td><td>必然通过</td></tr>
+              <tr><td>剩 4、5 号</td><td>4号必死</td><td>5号永远反对，4号只有 1 票</td></tr>
+              <tr><td>剩 3、4、5 号</td><td>3:99, 4:0, 5:1</td><td>4号支持（否则自己死）；5号拿 1 枚比之后独吞差但 4 号死了 5 号得 100，5 号会反对……重算：5号若拒绝，下轮 4 号必死，5 号得 100；所以 3 号需给 5 号 &gt;0，给 1 枚即可。4 号只要活命就赞成，给 0 枚</td></tr>
+              <tr><td>剩 2–5 号</td><td>2:97, 3:0, 4:1, 5:2</td><td>收买 4（上轮得 0，给 1）和 5（上轮得 1，给 2）</td></tr>
+              <tr><td>全部 5 人</td><td><strong>1:96, 2:0, 3:1, 4:0, 5:3</strong></td><td>收买 3（上轮得 0，给 1）和 5（上轮得 2，给 3）</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：1 号提案 — 1号:96, 2号:0, 3号:1, 4号:0, 5号:3，获 1+3+5 = 3 票通过</div>
+          <div class="puzzle-insight" style="margin-top:10px">逆向归纳：从最后一步往前推，每一步都收买"在下一轮会拿到最少的人"，用比他下一轮多 1 枚的价格买票，成本最低。</div>
+        </div>
+      </div>
+
+      <!-- P33 圆周三点锐角三角形 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">33</span>
+          <span class="puzzle-title">圆周三点构成锐角三角形的概率</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>在圆周上<strong>随机</strong>取三个点，这三个点构成<strong>锐角三角形</strong>的概率是多少？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>三角形为锐角三角形 ⟺ 三顶点所在圆弧，<strong>每段弧都小于半圆</strong>（&lt;180°）。</p>
+            <p style="margin-top:8px">设三段弧长度为 x、y、z（归一化，x+y+z=1）。在均匀分布下，(x,y,z) 均匀分布于单纯形 x+y+z=1, x,y,z≥0。</p>
+            <p style="margin-top:8px">需要 x &lt; 1/2，y &lt; 1/2，z &lt; 1/2。满足条件的区域占总面积的 <strong>1/4</strong>（三个约束各排除 1/4，交集剩 1/4）。</p>
+          </div>
+          <div class="puzzle-answer">答案：概率为 1/4</div>
+          <div class="puzzle-insight" style="margin-top:10px">直觉：三点随机取，有相当大概率某段弧超过半圆（即某角是钝角）。只有 1/4 的情况下三段弧都不超过半圆，才是锐角三角形。</div>
+        </div>
+      </div>
+
+      <!-- P34 男女比例悖论 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">34</span>
+          <span class="puzzle-title">男女比例悖论 — 策略不改变概率</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>一个国家每个家庭持续生孩子，直到生出<strong>第一个男孩</strong>为止。每次生育男女概率均为 1/2，各次独立。问这个国家最终<strong>男女比例</strong>是多少？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>直觉陷阱：有些家庭生了很多女儿，感觉女多男少。实际上：</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>家庭类型</th><th>概率</th><th>男孩数</th><th>女孩数</th></tr>
+              <tr><td>男</td><td>1/2</td><td>1</td><td>0</td></tr>
+              <tr><td>女男</td><td>1/4</td><td>1</td><td>1</td></tr>
+              <tr><td>女女男</td><td>1/8</td><td>1</td><td>2</td></tr>
+              <tr><td>…</td><td>…</td><td>1</td><td>…</td></tr>
+            </table>
+            <p style="margin-top:8px">每个家庭恰好生 <strong>1 个男孩</strong>，期望女孩数 = Σ k×(1/2)^(k+1) = <strong>1</strong>。</p>
+          </div>
+          <div class="puzzle-answer">答案：男女比例为 1:1</div>
+          <div class="puzzle-insight" style="margin-top:10px">无论生育策略如何，只要每次生育概率固定为 1/2，总体男女比例就是 1:1。策略只影响<strong>家庭规模</strong>，不影响总体性别比。每次生育都是独立事件，策略无法改变概率。</div>
+        </div>
+      </div>
+
+      <!-- P35 费米估算理发店 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">35</span>
+          <span class="puzzle-title">费米估算 — 城市理发店数量</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>如何估算你所在城市的理发店数量？（以北京为例）</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>费米估算：从需求侧出发，逐步拆解。</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>参数</th><th>估算值</th><th>依据</th></tr>
+              <tr><td>北京人口</td><td>2200 万</td><td>常识</td></tr>
+              <tr><td>人均理发频率</td><td>每月 1 次</td><td>男性频繁，女性较少，取均值</td></tr>
+              <tr><td>全市理发次数/月</td><td>2200 万次</td><td></td></tr>
+              <tr><td>每店每天接客</td><td>约 20 人次</td><td>2 位师傅 × 10 人/天</td></tr>
+              <tr><td>每店每月接客</td><td>600 人次</td><td>20 × 30</td></tr>
+              <tr><td>理发店数量</td><td><strong>≈ 3.7 万家</strong></td><td>2200万 ÷ 600</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：约 3–4 万家（实际北京约 4–6 万家，量级正确）</div>
+          <div class="puzzle-insight" style="margin-top:10px">费米估算考察<strong>结构化拆解能力</strong>和<strong>数量级判断</strong>，不要求精确。面试时展示：合理假设 → 逐步推导 → 自我校验（和常识对比）。</div>
+        </div>
+      </div>
+
+      <!-- P36 64匹马找前4名 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">36</span>
+          <span class="puzzle-title">64 匹马找前 4 名 — 字节跳动高频题</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p><strong>64 匹马</strong>，<strong>8 条赛道</strong>，每次同时跑 8 匹，无计时器（只能比较名次）。最少几次找出<strong>前 4 名</strong>？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>轮次</th><th>内容</th><th>目的</th></tr>
+              <tr><td>第 1–8 次</td><td>分 8 组各跑一次</td><td>每组排出名次</td></tr>
+              <tr><td>第 9 次</td><td>8 组冠军同场</td><td>确定<strong>全场第 1 名</strong>，确定候选组</td></tr>
+            </table>
+            <p style="margin-top:8px">第 9 次后，第 5–8 名的组<strong>全部淘汰</strong>。候选（需决出第 2/3/4 名）：</p>
+            <ul>
+              <li>G1 组 2、3、4 名（3 匹）</li>
+              <li>G2 组 1、2、3 名（3 匹）</li>
+              <li>G3 组 1、2 名（2 匹）</li>
+              <li>G4 组 1 名（1 匹）</li>
+              <li>共 <strong>9 匹</strong>，超出 8 条赛道</li>
+            </ul>
+            <p style="margin-top:8px"><strong>第 10 次</strong>：从 9 匹中取 8 匹跑（去掉 G1 组第 4 名——其前面已有 3 匹保证比它快），前 3 名即全场 2/3/4 名。</p>
+          </div>
+          <div class="puzzle-answer">答案：10 次（8 次分组 + 1 次冠军赛 + 1 次 8 马决赛）</div>
+          <div class="puzzle-insight" style="margin-top:10px">与 25 匹找前 3（题 #7）的区别：前 4 名候选更多（9 匹 vs 5 匹），8 条赛道恰好能一次跑完 8 匹，去掉必然不进前 4 的那 1 匹后刚好 8 匹。</div>
+        </div>
+      </div>
+
+      <!-- P37 桌上放硬币 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">37</span>
+          <span class="puzzle-title">桌上放硬币 — 中心对称必胜策略</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>两人轮流在一张<strong>矩形桌子</strong>上放硬币（相同大小，不可重叠，不可超出桌面），<strong>谁最后放不下谁输</strong>。先手有没有必胜策略？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>先手必胜，策略为<strong>中心对称</strong>：</p>
+            <ol style="margin-top:8px">
+              <li>先手第一步将硬币放在<strong>桌子正中心</strong></li>
+              <li>之后，无论后手在哪里放，先手都在<strong>关于桌子中心对称的位置</strong>放一枚</li>
+            </ol>
+            <p style="margin-top:8px">为什么必胜：矩形桌子关于中心点对称，若后手能放下，对称位置<strong>一定也能放下</strong>（空间对称保证）。因此先手永远有位置，后手先无处放则输。</p>
+          </div>
+          <div class="puzzle-answer">答案：先手必胜。策略：第一步占中心，之后始终走中心对称位置</div>
+          <div class="puzzle-insight" style="margin-top:10px">推广：任何具有中心对称性的桌面（圆形、正多边形等）都适用。本质是<strong>策略窃取（Strategy Stealing）</strong>：先手通过占据对称轴，将后手的每一步转化为自己的合法应对。</div>
+        </div>
+      </div>
+
       <!-- P14 水桶量水 -->
       <div class="puzzle-card">
         <div class="puzzle-card-header" onclick="togglePuzzle(this)">
