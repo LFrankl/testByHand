@@ -1076,6 +1076,195 @@
         </div>
       </div>
 
+      <!-- P14 水桶量水 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">14</span>
+          <span class="puzzle-title">水桶量水 — 3升与5升量出4升</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>有一个 <strong>3 升</strong>的桶和一个 <strong>5 升</strong>的桶，水源无限，没有刻度。如何量出恰好 <strong>4 升</strong>水？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>步骤</th><th>操作</th><th>3升桶</th><th>5升桶</th></tr>
+              <tr><td>①</td><td>装满 5升桶</td><td>0</td><td>5</td></tr>
+              <tr><td>②</td><td>5升桶倒入 3升桶</td><td>3</td><td>2</td></tr>
+              <tr><td>③</td><td>倒空 3升桶</td><td>0</td><td>2</td></tr>
+              <tr><td>④</td><td>5升桶剩余 2升倒入 3升桶</td><td>2</td><td>0</td></tr>
+              <tr><td>⑤</td><td>装满 5升桶</td><td>2</td><td>5</td></tr>
+              <tr><td>⑥</td><td>5升桶倒入 3升桶（只能倒 1升）</td><td>3</td><td><strong>4</strong></td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：4升水在 5升桶中，共 6 步</div>
+          <div class="puzzle-insight" style="margin-top:10px">推广：若两桶容量<strong>互质</strong>（最大公因数为 1），则理论上可以量出 1 到两桶容量之和之间的任意整数升。</div>
+        </div>
+      </div>
+
+      <!-- P15 电灯开关 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">15</span>
+          <span class="puzzle-title">电灯开关 — 热/冷辨识三盏灯</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>房间外有 <strong>3 个开关</strong>，分别控制房间内的 <strong>3 盏灯</strong>，初始全部关闭。你<strong>只能进入房间一次</strong>，进去前可以任意拨动开关，进去后不能再出来操作。如何确定每个开关对应哪盏灯？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>利用灯泡的两种状态：<strong>亮/灭（电）</strong>和<strong>冷/热（余温）</strong>，让三盏灯携带不同信息。</p>
+            <ul style="margin-top:8px">
+              <li>打开<strong>开关 1</strong>，等待 <strong>5 分钟</strong></li>
+              <li>关闭<strong>开关 1</strong>，打开<strong>开关 2</strong></li>
+              <li>立即进入房间</li>
+            </ul>
+            <p style="margin-top:8px">判断：<strong>亮着的灯</strong> → 开关 2；<strong>灭但热的灯</strong> → 开关 1；<strong>灭且冷的灯</strong> → 开关 3。</p>
+          </div>
+          <div class="puzzle-answer">答案：利用"亮/灭"和"热/冷"两个维度区分三盏灯，一次进入即可确定</div>
+          <div class="puzzle-insight" style="margin-top:10px">本质是信息编码：2 个布尔维度可区分 4 种状态，足以覆盖 3 盏灯。当"只能操作一次"是约束时，优先寻找额外可利用的物理维度。</div>
+        </div>
+      </div>
+
+      <!-- P16 狼羊白菜 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">16</span>
+          <span class="puzzle-title">狼羊白菜渡河 — 约束搜索</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>农夫需要将<strong>一只狼、一只羊、一棵白菜</strong>运过河，船每次只能带<strong>一样</strong>。农夫不在时：狼会吃羊，羊会吃白菜。如何让三样东西都安全过河？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>步骤</th><th>带走</th><th>此岸</th><th>对岸</th></tr>
+              <tr><td>①</td><td>带羊过去</td><td>狼、白菜</td><td>羊</td></tr>
+              <tr><td>②</td><td>空船返回</td><td>狼、白菜</td><td>羊</td></tr>
+              <tr><td>③</td><td>带狼过去</td><td>白菜</td><td>狼、羊</td></tr>
+              <tr><td>④</td><td><strong>带羊返回（关键！）</strong></td><td>羊、白菜</td><td>狼</td></tr>
+              <tr><td>⑤</td><td>带白菜过去</td><td>羊</td><td>狼、白菜</td></tr>
+              <tr><td>⑥</td><td>空船返回</td><td>羊</td><td>狼、白菜</td></tr>
+              <tr><td>⑦</td><td>带羊过去</td><td>—</td><td>全部 ✓</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：7 步，关键是第 4 步把羊带回来</div>
+          <div class="puzzle-insight" style="margin-top:10px">反直觉：把已过河的东西带回来，反而是最优解。把羊视为"唯一不能单独留下"的元素，其他对象两两无冲突，因此羊需要特殊处理。</div>
+        </div>
+      </div>
+
+      <!-- P17 红眼岛 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">17</span>
+          <span class="puzzle-title">红眼岛 — 公共知识的威力</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>一座岛上有 <strong>100 个人，全部是红眼睛</strong>。每人能看到其他所有人的眼睛颜色，但看不到自己的，也不能讨论眼睛颜色。若某人确认自己是红眼睛，必须当晚离岛。某天外来者公开宣布："<strong>你们中至少有一个人是红眼睛。</strong>" 之后会发生什么？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>外来者的话看似废话（每人已能看到 99 双红眼），但它引入了<strong>公共知识</strong>——每个人都知道其他人也听到了这句话。</p>
+            <p style="margin-top:8px">归纳法：</p>
+            <ul>
+              <li><strong>n=1</strong>：红眼人看到 0 个红眼，立刻知道自己是，<strong>第 1 天</strong>离岛</li>
+              <li><strong>n=2</strong>：每人看到 1 个红眼，等第 1 天——对方没走，说明对方也看到了红眼，即自己也是，<strong>第 2 天</strong>同时离岛</li>
+              <li><strong>n=100</strong>：<strong>第 100 天</strong>，100 人全部同时离岛</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：第 100 天，100 人全部同时离岛</div>
+          <div class="puzzle-insight" style="margin-top:10px">外来者的话并非废话，它建立了<strong>公共知识</strong>（每人知道每人知道……至少有 1 个红眼）。而之前只有<strong>共有知识</strong>（每人各自知道至少 99 个红眼，但这不是公共知识）。两者差距引发了连锁推理。</div>
+        </div>
+      </div>
+
+      <!-- P18 掰巧克力 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">18</span>
+          <span class="puzzle-title">掰巧克力 — 操作次数不变量</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>一块 <strong>m × n</strong> 的巧克力，沿格线掰开，每次只能掰<strong>一块</strong>（不能叠放同时掰多块）。最少需要掰<strong>几次</strong>才能全部分成 1×1 的单块？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>用<strong>不变量</strong>思考：每掰一次，块数增加 <strong>1</strong>。</p>
+            <ul style="margin-top:8px">
+              <li>初始：1 块</li>
+              <li>目标：m × n 块</li>
+              <li>需要增加：m × n − 1 块</li>
+            </ul>
+            <p style="margin-top:8px">无论以何种顺序掰，都需要恰好 <strong>m × n − 1 次</strong>，与策略无关。</p>
+          </div>
+          <div class="puzzle-answer">答案：m × n − 1 次</div>
+          <div class="puzzle-insight" style="margin-top:10px">陷阱：试图寻找"更优策略"——实际上所有策略次数相同，因为每次操作恰好让块数 +1，是严格不变量。遇到"最少几步"类问题，先想：有没有每步都必然发生的量？</div>
+        </div>
+      </div>
+
+      <!-- P19 鸽巢原理 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">19</span>
+          <span class="puzzle-title">鸽巢原理 — 北京人头发数</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>北京有 <strong>2000 万人口</strong>，每人头发数量在 0 到 <strong>150 万根</strong>之间。是否一定存在至少两个人头发数量完全相同？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>鸽巢原理（抽屉原理）</strong>：如果 n 个物品放入 m 个容器，且 n &gt; m，则至少有一个容器里有 2 个以上的物品。</p>
+            <ul style="margin-top:8px">
+              <li>头发数量：0, 1, 2, …, 1500000，共 <strong>150 万 + 1 = 1500001 种</strong>（容器数）</li>
+              <li>人口：<strong>2000 万</strong>（物品数）</li>
+              <li>2000 万 >> 150 万，必然存在至少两人头发数完全相同</li>
+            </ul>
+          </div>
+          <div class="puzzle-answer">答案：一定存在，且至少有约 13 人头发数量相同（2000万 ÷ 150万 ≈ 13.3）</div>
+          <div class="puzzle-insight" style="margin-top:10px">鸽巢原理应用：生日问题、哈希碰撞、抽屉里的袜子……凡是"可能性有限但对象更多"的场景都能用。它的力量在于：无需知道具体分布，仅靠计数就能得出确定性结论。</div>
+        </div>
+      </div>
+
+      <!-- P20 蚂蚁爬杆 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">20</span>
+          <span class="puzzle-title">蚂蚁爬杆 — 相遇等效穿过</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>一根长 <strong>1 米（100 cm）</strong>的细杆，<strong>100 只蚂蚁</strong>随机分布在杆上，每只蚂蚁以 <strong>1 cm/s</strong> 的速度向左或向右爬行，到达端点后掉落。两只蚂蚁相遇时，各自<strong>掉头</strong>反向爬。问：所有蚂蚁都掉落所需的<strong>最长时间</strong>是多少？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>关键洞察</strong>：两只蚂蚁相遇掉头，等价于两只蚂蚁<strong>互相穿过</strong>——因为蚂蚁完全相同，无法区分。</p>
+            <p style="margin-top:8px">因此，每只蚂蚁的运动等价于一个"信号"从初始位置向某方向匀速传播，直到端点为止。所有信号独立，互不干扰。</p>
+            <p style="margin-top:8px">最坏情况：某只蚂蚁距离最远端点 <strong>100 cm</strong>，需要 <strong>100 秒</strong>。</p>
+          </div>
+          <div class="puzzle-answer">答案：最长时间为 100 秒</div>
+          <div class="puzzle-insight" style="margin-top:10px">模型简化的威力：把"掉头"换成"穿过"，复杂的多体碰撞问题瞬间变成 100 个独立的单体运动问题。寻找等价变换往往是解决复杂系统问题的关键。</div>
+        </div>
+      </div>
+
     </section>
 
     <!-- ══════════════════════════════ 9. sync.Map ══════════════════════════════ -->
