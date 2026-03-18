@@ -1328,6 +1328,416 @@
         </div>
       </div>
 
+      <!-- P45 海盗分金币规则对比 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">45</span>
+          <span class="puzzle-title">海盗分金币（规则对比）— >半数 vs ≥半数</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>5 个海盗分 100 枚金币，优先级：保命 > 多拿 > 多杀。问<strong>超过半数（≥3票）</strong>和<strong>≥半数</strong>两种规则下，1 号的最优方案分别是什么？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路（逆向归纳）</div>
+            <p><strong>>半数版（需 ≥3 票）：</strong>2 人局 4 号需拉拢 5 号（各 1 票不够），给 5 号 1 枚。向上传导：</p>
+            <table class="puzzle-table" style="margin-top:6px">
+              <tr><th>提案人</th><th>方案</th><th>逻辑</th></tr>
+              <tr><td>4 号（2人）</td><td>4:99, 5:1</td><td>需 2 票，给 5 号 1 枚</td></tr>
+              <tr><td>3 号（3人）</td><td>3:98, 4:0, 5:2</td><td>需 2 票，5 号下轮得 1，给 2</td></tr>
+              <tr><td>2 号（4人）</td><td>2:97, 3:0, 4:1, 5:2</td><td>需 3 票，收买 4(+1)和 5(+1)</td></tr>
+              <tr><td>1 号（5人）</td><td><strong>1:97, 2:0, 3:1, 4:0, 5:2</strong></td><td>需 3 票，收买 3(+1)和 5(+1)</td></tr>
+            </table>
+            <p style="margin-top:8px"><strong>≥半数版（2 人局 1 票即过）：</strong>4 号独吞 100，3 号无法收买 4 号（需给 101 枚），只能给 5 号 1 枚：3:99,4:0,5:1。向上传导最终得 <strong>1:96,2:0,3:1,4:0,5:3</strong>（同题 #32）。</p>
+          </div>
+          <div class="puzzle-answer">&gt;半数：1号97,2号0,3号1,4号0,5号2；≥半数：1号96,2号0,3号1,4号0,5号3</div>
+          <div class="puzzle-insight" style="margin-top:10px">差异来源：2 人局的权力结构不同，4 号在 ≥半数规则下独大，索价更高，向上传导后 1 号需多付 1 枚。</div>
+        </div>
+      </div>
+
+      <!-- P46 老虎机博弈 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">46</span>
+          <span class="puzzle-title">老虎机博弈 — 零和对称博弈</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>同时展示硬币正/反面。两人相同你赢 1 元，不同对手赢 1 元。这个游戏公平吗？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th></th><th>对手:正</th><th>对手:反</th></tr>
+              <tr><td><strong>你:正</strong></td><td>你 +1</td><td>你 -1</td></tr>
+              <tr><td><strong>你:反</strong></td><td>你 -1</td><td>你 +1</td></tr>
+            </table>
+            <p style="margin-top:8px">无纯策略均衡（无论选哪个，对手总能选"不同"占优）。<strong>混合策略均衡</strong>：双方各以 1/2 概率选正面，期望收益均为 0。</p>
+          </div>
+          <div class="puzzle-answer">答案：游戏公平，混合策略均衡下期望收益均为 0，无需调整</div>
+          <div class="puzzle-insight" style="margin-top:10px">对称零和博弈的特征：不存在纯策略均衡，混合策略均衡下双方收益均等。石头剪刀布是同类型博弈。</div>
+        </div>
+      </div>
+
+      <!-- P47 拍卖一元钱 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">47</span>
+          <span class="puzzle-title">拍卖一元钱 — 升级战争陷阱</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>出价最高者赢得 1 元，但<strong>第一和第二高价者都要付钱</strong>。你会参与吗？策略是什么？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>每一步的<strong>局部理性</strong>导致全局非理性：出价超过 1 元后双方都亏，但仍有动机再加 1 分（"加了可以从亏更多变成亏少一点"）。</p>
+            <ul style="margin-top:8px">
+              <li>没有纯策略均衡，理论上出价在 1 元时停止，但实验中远超 1 元</li>
+              <li>本质是<strong>沉没成本谬误</strong>：已经出价就不想白白损失，越陷越深</li>
+            </ul>
+            <p style="margin-top:8px"><strong>理性策略</strong>：不参与。若非参与不可，在开局就出高价（如 0.99 元）威慑对手退出，一旦对手跟进则立刻放弃。</p>
+          </div>
+          <div class="puzzle-answer">答案：不应参与。一旦参与，沉没成本驱动无限升级，双方都亏</div>
+          <div class="puzzle-insight" style="margin-top:10px">现实对应：军备竞赛、打官司（双方律师费都是沉没成本）、超长时间的股权谈判。关键是识别"升级战争"的结构，提前退出。</div>
+        </div>
+      </div>
+
+      <!-- P48 旅行者困境 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">48</span>
+          <span class="puzzle-title">旅行者困境 — 迭代剔除劣策略</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>两旅行者独立申报赔偿额（2–100 整数）。相同则各得该数；不同则低者得（低额+2），高者得（低额-2）。双方均理性，最终申报多少？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>迭代剔除劣策略（IESDS）：</strong></p>
+            <ul style="margin-top:8px">
+              <li>申报 100 是劣策略：若对方报 99，你报 100 得 97，报 99 得 101 → 剔除 100</li>
+              <li>申报 99 是劣策略：对方最高报 98，你报 99 得 96，报 98 得 100 → 剔除 99</li>
+              <li>不断迭代，唯一纳什均衡 = <strong>双方申报 2</strong></li>
+            </ul>
+            <p style="margin-top:8px">但实验中真实人类几乎都申报 90–100，获得接近最大收益。</p>
+          </div>
+          <div class="puzzle-answer">答案：理论纳什均衡为双方申报 2，实验中人类申报远高于此</div>
+          <div class="puzzle-insight" style="margin-top:10px">"理性导致非最优"的经典案例。完全理性推导出最差结果（各得 2），而有限理性的人反而接近最优（各得约 97）。反映了有限理性和社会偏好对博弈结果的重要影响。</div>
+        </div>
+      </div>
+
+      <!-- P49 智猪博弈 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">49</span>
+          <span class="puzzle-title">智猪博弈 — 占优策略与搭便车</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>大猪和小猪共用猪圈。踩踏板出 10 单位食物，踩板耗 2 单位。先到食槽：大:小 = 9:1；同时到：7:3；小先到：6:4。谁会踩踏板？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th></th><th>大猪踩（-2）</th><th>大猪不踩</th></tr>
+              <tr><td><strong>小猪踩（-2）</strong></td><td>小猪:3-2=<strong>1</strong>, 大猪:7</td><td>小猪:4-2=<strong>2</strong>, 大猪:6</td></tr>
+              <tr><td><strong>小猪不踩</strong></td><td>小猪:<strong>1</strong>, 大猪:9-2=7</td><td>小猪:<strong>0</strong>, 大猪:0</td></tr>
+            </table>
+            <p style="margin-top:8px">小猪无论大猪踩不踩，<strong>不踩 ≥ 踩</strong>（1≥1，0&lt;2 时不踩更优，1=1 时无差异）——<strong>等待是小猪的弱占优策略</strong>。大猪知道小猪不踩，踩(7)>不踩(0)，只能自己踩。</p>
+          </div>
+          <div class="puzzle-answer">答案：大猪踩踏板，小猪坐享其成。小猪"等待"是占优策略</div>
+          <div class="puzzle-insight" style="margin-top:10px">现实对应：大公司做市场教育（踩踏板），小公司跟随获益（小猪）。创业公司等巨头验证市场再进入，也是智猪博弈的体现。</div>
+        </div>
+      </div>
+
+      <!-- P50 懦夫博弈 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">50</span>
+          <span class="puzzle-title">懦夫博弈 — 3个纳什均衡</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>两人相向驾车，谁先转向谁是"懦夫"。双方都直行：车毁(-∞)；A直B转：A+10,B-10；都转向：各-5。找出所有纳什均衡。</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th></th><th>B 直行</th><th>B 转向</th></tr>
+              <tr><td><strong>A 直行</strong></td><td>(-∞, -∞)</td><td>(+10, -10)</td></tr>
+              <tr><td><strong>A 转向</strong></td><td>(-10, +10)</td><td>(-5, -5)</td></tr>
+            </table>
+            <p style="margin-top:8px"><strong>纯策略均衡（2个）：</strong>(直行,转向) 和 (转向,直行)。</p>
+            <p style="margin-top:4px"><strong>混合策略均衡（1个）：</strong>忽略 -∞ 近似，各以极小概率 p≈0 直行（ -∞ 的存在使直行概率趋于 0）。</p>
+            <p style="margin-top:8px"><strong>现实演化：</strong>先行承诺（扔掉方向盘）可使威胁可信；重复博弈中演化出轮流退让的惯例。</p>
+          </div>
+          <div class="puzzle-answer">答案：3 个纳什均衡（2 纯策略 + 1 混合策略）。谁先承诺直行谁占优</div>
+          <div class="puzzle-insight" style="margin-top:10px">对应现实：价格战（谁先降价谁是懦夫）、外交对峙、军备竞赛。承诺机制（烧桥、沉没投资）是改变均衡的关键工具。</div>
+        </div>
+      </div>
+
+      <!-- P51 进入威慑博弈 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">51</span>
+          <span class="puzzle-title">进入威慑博弈 — 不可信威胁</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>垄断者 vs 潜在进入者。不进入：在位 100，进入者 0。进入后：斗争(各20) or 容纳(在位50,进入者40)。进入者先动，问子博弈精炼均衡？"我一定斗争"是否可信？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>逆向归纳：</strong>在位者面临选择时，容纳(50) > 斗争(20)，理性在位者选<strong>容纳</strong>。进入者预见到这点，进入(40) > 不进入(0)，选<strong>进入</strong>。</p>
+            <p style="margin-top:8px"><strong>"斗争"威胁为何不可信：</strong>一旦进入者真的进入，斗争对在位者更差，理性人不会执行。这是博弈路径外的<strong>空洞威胁</strong>。</p>
+            <p style="margin-top:8px"><strong>让威胁可信的方法：</strong>事先投入沉没成本（建立超额产能、签降价承诺合同），改变进入后的收益结构，使斗争变得合算。</p>
+          </div>
+          <div class="puzzle-answer">答案：进入者进入，在位者容纳（50,40）。斗争威胁不可信，需通过沉没成本承诺才能实现威慑</div>
+          <div class="puzzle-insight" style="margin-top:10px">子博弈精炼纳什均衡（SPNE）的核心：排除路径外的空洞威胁。现实中企业通过产能过剩、长期合同、品牌信誉等方式让竞争威胁"可信化"。</div>
+        </div>
+      </div>
+
+      <!-- P52 分蛋糕折现博弈 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">52</span>
+          <span class="puzzle-title">分蛋糕博弈（无限轮）— Rubinstein 谈判</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>A、B 轮流提方案分蛋糕，A 先提。拒绝则下一轮蛋糕缩小为 δ 倍（0&lt;δ&lt;1）。均衡结果是什么？δ 的大小意味着什么？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>设均衡下 A 提案时获得 x（归一化蛋糕为 1）。B 拒绝后下一轮 B 提，角色对称，B 获得均衡份额 x，A 获得 1-x，折现后 A 得 δ(1-x)。</p>
+            <p style="margin-top:8px">B 恰好愿意接受：1-x = δ(1-x) 不对；正确推导：B 拒绝后可得 δ·x（作为下一轮提议者获得均衡份额），所以 B 接受的条件是 1-x ≥ δx，均衡时取等：</p>
+            <p style="margin-top:4px; padding:6px; background:#F3F4F6; border-radius:4px; font-family:monospace">1 - x = δx &nbsp;→&nbsp; x = 1/(1+δ)</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>δ 值</th><th>A 获得</th><th>B 获得</th><th>含义</th></tr>
+              <tr><td>δ→1（缩得慢）</td><td>≈1/2</td><td>≈1/2</td><td>双方接近平等</td></tr>
+              <tr><td>δ→0（缩得快）</td><td>≈1</td><td>≈0</td><td>先提议方几乎全拿</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：A 获得 1/(1+δ)，B 获得 δ/(1+δ)。δ 越大越平等；δ 越小先手优势越大</div>
+          <div class="puzzle-insight" style="margin-top:10px">现实启示：谈判中让对方"等不起"（提高他的折现率/机会成本）可以增强己方谈判地位。"时间就是金钱"在博弈论中有精确的数学含义。</div>
+        </div>
+      </div>
+
+      <!-- P53 最后通牒博弈 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">53</span>
+          <span class="puzzle-title">最后通牒博弈 — 行为博弈论</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>A 有 10 元，提议分给 B x 元。B 接受则执行，拒绝则双方各得 0。理论上 A 分多少？实验中会发生什么？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>理论（完全理性）：</strong>B 只要 x&gt;0 就接受（比 0 好），A 分 0.01 元，自得 9.99。</p>
+            <p style="margin-top:8px"><strong>实验现实：</strong></p>
+            <ul>
+              <li>A 平均分约 <strong>3–4 元</strong>（远高于理论最小值）</li>
+              <li>B 会拒绝低于 <strong>2–3 元</strong>的提议，宁愿双方归零</li>
+            </ul>
+            <p style="margin-top:8px"><strong>原因：</strong>① 公平偏好——人有内在公平感；② 惩罚意愿——B 愿意付出代价惩罚不公平；③ 文化规范——不同文化"公平"基准不同。</p>
+          </div>
+          <div class="puzzle-answer">答案：理论分 0.01 元，实验中分 3–4 元。差异来自公平偏好和惩罚意愿——行为博弈论的核心发现</div>
+          <div class="puzzle-insight" style="margin-top:10px">行为博弈论（Behavioral Game Theory）将心理学引入博弈分析，修正了"完全理性人"假设。诺贝尔奖得主 Thaler 的研究大量基于此类实验。</div>
+        </div>
+      </div>
+
+      <!-- P54 柠檬市场 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">54</span>
+          <span class="puzzle-title">柠檬市场 — 逆向选择与市场失灵</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>二手车市场：好车值 10 万，坏车值 5 万，各占一半，买家无法区分。买家出平均价 7.5 万，接下来会发生什么？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>逆向选择（Adverse Selection）的螺旋：</strong></p>
+            <ol style="margin-top:8px">
+              <li>好车卖家不愿以 7.5 万卖 10 万的车，<strong>退出市场</strong></li>
+              <li>市场只剩坏车，买家意识到后只愿出 5 万</li>
+              <li>部分坏车卖家也退出，市场进一步萎缩</li>
+              <li>最终<strong>市场崩溃</strong>或只剩最低质量商品</li>
+            </ol>
+            <p style="margin-top:8px"><strong>解决方案：</strong>第三方认证（消除信息不对称）、保修承诺（信号传递）、政府强制披露。</p>
+          </div>
+          <div class="puzzle-answer">答案：逆向选择导致好车退出，市场可能完全崩溃。阿克洛夫 1970 年凭此获诺贝尔经济学奖</div>
+          <div class="puzzle-insight" style="margin-top:10px">广泛应用：保险市场（高风险人更愿买保险）、信贷市场（坏借款人更愿借贷）、劳动力市场（低能力者更愿接受低工资）。信息不对称是市场失灵的核心原因之一。</div>
+        </div>
+      </div>
+
+      <!-- P55 劳动力市场信号 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">55</span>
+          <span class="puzzle-title">劳动力市场信号 — 斯彭斯信号模型</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>高能力员工产出 100，低能力产出 50。高能力者读书成本 20，低能力读书成本 50。文凭不提高能力。是否存在只有高能力者读书的均衡？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>寻找<strong>分离均衡</strong>（高能力读书，低能力不读）：</p>
+            <ul style="margin-top:8px">
+              <li>高能力读书：工资 100，净收益 100-20=<strong>80</strong> &gt; 不读时的 50</li>
+              <li>低能力读书：工资 100，净收益 100-50=<strong>50</strong> = 不读时的 50（无差异，严格条件下不值得）</li>
+            </ul>
+            <p style="margin-top:8px">工资差在 [20, 50] 区间时，分离均衡成立：高能力者读书有利，低能力者读书无额外收益。</p>
+          </div>
+          <div class="puzzle-answer">答案：存在分离均衡。文凭是纯信号——不提高能力，但有效区分类型，工资差在 [20,50] 时均衡成立</div>
+          <div class="puzzle-insight" style="margin-top:10px">斯彭斯（Spence）凭此获 2001 年诺贝尔经济学奖。反思：若文凭只是信号而非能力本身，高等教育的社会价值是否被高估？这是教育经济学的核心争论。</div>
+        </div>
+      </div>
+
+      <!-- P56 赢者诅咒 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">56</span>
+          <span class="puzzle-title">赢者诅咒 — 条件期望与拍卖</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>一罐金币竞拍，你估计有 100 枚，实际随机。多人竞拍出价最高者得。赢了意味着什么？理性人如何出价？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p>赢得拍卖 = 你的出价是所有人中最高的 = 你对价值的估计<strong>可能是最乐观的</strong>。</p>
+            <p style="margin-top:8px">E[真实价值 | 你赢了] &lt; E[真实价值] = 你的估计</p>
+            <p style="margin-top:8px"><strong>理性调整：</strong>出价 = 估计值 - 修正量（修正量 = 高估的条件期望）。参与者越多，修正量越大。</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>场景</th><th>实际应用</th></tr>
+              <tr><td>石油矿区拍卖</td><td>赢家往往高估储量</td></tr>
+              <tr><td>公司并购</td><td>收购溢价常导致买方股价下跌</td></tr>
+              <tr><td>IPO</td><td>首日破发——发行价被高估</td></tr>
+            </table>
+          </div>
+          <div class="puzzle-answer">答案：赢得拍卖是坏消息，说明你可能高估了。理性人应将出价调整为低于估计值，参与者越多折扣越大</div>
+          <div class="puzzle-insight" style="margin-top:10px">实践建议：竞拍时问自己"如果只有我一个人竞拍，我还会出这个价吗？"如果答案是否，你可能已经陷入赢者诅咒。</div>
+        </div>
+      </div>
+
+      <!-- P57 猎鹿博弈 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">57</span>
+          <span class="puzzle-title">猎鹿博弈 — 协调博弈与帕累托最优</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>两猎人可单独猎兔（各得 3）或合作猎鹿（各得 5）。若一人猎鹿另一人猎兔：猎鹿者得 0，猎兔者得 3。找出所有纳什均衡。</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th></th><th>B 猎鹿</th><th>B 猎兔</th></tr>
+              <tr><td><strong>A 猎鹿</strong></td><td>(5, 5) ✓</td><td>(0, 3)</td></tr>
+              <tr><td><strong>A 猎兔</strong></td><td>(3, 0)</td><td>(3, 3) ✓</td></tr>
+            </table>
+            <p style="margin-top:8px"><strong>纯策略均衡（2个）：</strong>(猎鹿,猎鹿) 帕累托最优；(猎兔,猎兔) 风险占优（更安全）。</p>
+            <p style="margin-top:4px"><strong>混合均衡（1个）：</strong>5p = 3 → p = 3/5（以 3/5 概率猎鹿）。</p>
+          </div>
+          <div class="puzzle-answer">答案：3 个均衡。(猎鹿,猎鹿) 帕累托最优但需要信任；(猎兔,猎兔) 风险占优但次优。协调到帕累托最优需要沟通机制</div>
+          <div class="puzzle-insight" style="margin-top:10px">与囚徒困境的区别：猎鹿博弈中合作均衡本身是纳什均衡（不需要重复博弈支撑），问题只是如何协调到那个均衡。现实中通过沟通、惯例、制度设计解决。</div>
+        </div>
+      </div>
+
+      <!-- P58 重复囚徒困境 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">58</span>
+          <span class="puzzle-title">重复囚徒困境 — 以牙还牙策略</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>囚徒困境（合作各+3，背叛+5/合作者0，双背叛各+1）无限重复。能否维持合作？什么是以牙还牙策略（TFT）？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <p><strong>以牙还牙（Tit-for-Tat）：</strong>第 1 轮合作，之后每轮复制对方上一轮行为。</p>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th>特点</th><th>含义</th></tr>
+              <tr><td>善良（Nice）</td><td>不先背叛</td></tr>
+              <tr><td>报复（Retaliatory）</td><td>立即惩罚背叛</td></tr>
+              <tr><td>宽容（Forgiving）</td><td>对方恢复合作后立即原谅</td></tr>
+              <tr><td>清晰（Clear）</td><td>策略简单，对手容易理解</td></tr>
+            </table>
+            <p style="margin-top:8px"><strong>维持合作的条件：</strong>折现因子 δ &gt; 1/3（背叛额外收益 2 &lt; 未来合作损失 2δ/(1-δ)）。</p>
+          </div>
+          <div class="puzzle-answer">答案：δ&gt;1/3 时 TFT 可维持合作均衡。Axelrod 计算机锦标赛中 TFT 击败所有复杂策略</div>
+          <div class="puzzle-insight" style="margin-top:10px">TFT 的局限：在有噪声的环境中（偶尔误判对方行为），TFT 会陷入"报复循环"。改进版"慷慨的 TFT"（偶尔原谅背叛）更稳健。</div>
+        </div>
+      </div>
+
+      <!-- P59 性别战博弈 -->
+      <div class="puzzle-card">
+        <div class="puzzle-card-header" onclick="togglePuzzle(this)">
+          <span class="puzzle-num">59</span>
+          <span class="puzzle-title">性别战博弈 — 混合策略均衡计算</span>
+          <button class="puzzle-toggle">展开</button>
+        </div>
+        <div class="hint-block puzzle-body">
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">题目</div>
+            <p>夫妻选择拳击（夫偏爱）或芭蕾（妻偏爱），但更想在一起。一起拳击(夫2,妻1)，一起芭蕾(夫1,妻2)，分开(0,0)。找出所有均衡，混合均衡下在一起的概率是多少？</p>
+          </div>
+          <div class="puzzle-section">
+            <div class="puzzle-section-label">关键思路</div>
+            <table class="puzzle-table" style="margin-top:8px">
+              <tr><th></th><th>妻:拳击</th><th>妻:芭蕾</th></tr>
+              <tr><td><strong>夫:拳击</strong></td><td>(2,1) ✓</td><td>(0,0)</td></tr>
+              <tr><td><strong>夫:芭蕾</strong></td><td>(0,0)</td><td>(1,2) ✓</td></tr>
+            </table>
+            <p style="margin-top:8px"><strong>混合均衡：</strong>设夫以概率 p 选拳击，妻以概率 q 选拳击。</p>
+            <ul>
+              <li>妻无差异：2q = 1-q → <strong>q = 1/3</strong></li>
+              <li>夫无差异：2p = 1-p → <strong>p = 2/3</strong></li>
+            </ul>
+            <p style="margin-top:8px">在一起概率 = pq + (1-p)(1-q) = (2/3)(1/3) + (1/3)(2/3) = <strong>4/9 ≈ 44%</strong></p>
+          </div>
+          <div class="puzzle-answer">答案：3 个均衡（拳击拳击、芭蕾芭蕾、混合策略）。混合均衡下在一起概率 4/9，低于纯策略均衡的 100%</div>
+          <div class="puzzle-insight" style="margin-top:10px">混合均衡的协调效率最低——两人各自随机选择，反而经常分开。现实建议：提前沟通（哪怕用抛硬币决定），总比混合均衡好。这也是为什么协调博弈中沟通机制（Cheap Talk）有正向价值。</div>
+        </div>
+      </div>
+
       <!-- P40 毒药与试纸 -->
       <div class="puzzle-card">
         <div class="puzzle-card-header" onclick="togglePuzzle(this)">
