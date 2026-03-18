@@ -96,6 +96,63 @@
     nav a.nav-puzzle.active { color: #7C3AED; border-left-color: #7C3AED; background: #F5F3FF; }
     nav a.nav-puzzle:hover { background: #EDE9FE; color: #7C3AED; }
 
+    nav a.nav-sysdesign { font-size: 14px; }
+    nav a.nav-sysdesign.active { color: #2563EB; border-left-color: #2563EB; background: #EFF6FF; }
+    nav a.nav-sysdesign:hover { background: #DBEAFE; color: #2563EB; }
+
+    /* system design cards */
+    .sd-card {
+      border: 1px solid #BFDBFE;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .sd-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+      background: #EFF6FF; cursor: pointer;
+      user-select: none; gap: 12px;
+    }
+    .sd-card-header:hover { background: #DBEAFE; }
+    .sd-num {
+      font-size: 11px; font-weight: 700;
+      background: #BFDBFE; color: #1D4ED8;
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .sd-title { font-size: 15px; font-weight: 600; flex: 1; }
+    .sd-toggle {
+      font-size: 12px; color: #2563EB;
+      background: #BFDBFE; border: none; border-radius: 4px;
+      padding: 3px 10px; cursor: pointer; white-space: nowrap;
+    }
+    .sd-body { padding: 20px 24px; border-top: 1px solid #BFDBFE; }
+    .sd-section { margin-bottom: 16px; }
+    .sd-section:last-child { margin-bottom: 0; }
+    .sd-section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: #2563EB; margin-bottom: 6px;
+    }
+    .sd-section p, .sd-section li {
+      font-size: 14px; line-height: 1.75; color: #374151;
+    }
+    .sd-section ul, .sd-section ol { padding-left: 20px; }
+    .sd-answer {
+      background: #EFF6FF; border: 1px solid #BFDBFE;
+      border-radius: 6px; padding: 10px 16px;
+      font-size: 13px; color: #1D4ED8; line-height: 1.65;
+    }
+    .sd-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+    .sd-table th { background: #DBEAFE; padding: 6px 10px; text-align: left;
+      border: 1px solid #BFDBFE; font-size: 12px; color: #1D4ED8; }
+    .sd-table td { padding: 6px 10px; border: 1px solid #BFDBFE; }
+    .sd-code {
+      background: #F8FAFF; border: 1px solid #BFDBFE; border-radius: 6px;
+      padding: 12px 16px; font-size: 12.5px; font-family: "SF Mono", "Fira Code", monospace;
+      line-height: 1.6; white-space: pre; overflow-x: auto; color: #1E3A5F;
+    }
+
     /* puzzle cards */
     .puzzle-card {
       border: 1px solid var(--border);
@@ -322,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题</span>
+  <span class="badge">9 题 · 59 智力题 · 5 系统设计</span>
 </header>
 
 <div class="layout">
@@ -340,6 +397,9 @@
     <div class="nav-sep"></div>
     <div class="nav-label">智力题</div>
     <a href="#puzzles" class="nav-puzzle">🧩 智力题集</a>
+    <div class="nav-sep"></div>
+    <div class="nav-label">系统设计</div>
+    <a href="#sysdesign" class="nav-sysdesign">🏗 系统设计题集</a>
   </nav>
 
   <main>
@@ -2347,6 +2407,268 @@
         </div>
       </div>
 
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════ 系统设计题集 ══════════════════════════════ -->
+    <section class="topic" id="sysdesign">
+      <div class="topic-header">
+        <h2>系统设计题集 <span class="tag" style="background:#DBEAFE;color:#2563EB">System Design</span></h2>
+        <p>互联网大厂开发岗系统设计面试题，涵盖高并发、分布式存储、消息队列等核心场景。</p>
+      </div>
+
+      <!-- SD1 设计推特 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">1</span>
+          <span class="sd-title">设计推特（Twitter Feed）</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个类似 Twitter 的信息流系统。用户可以发布推文、关注其他用户，并查看关注者的最新时间线（Home Timeline）。要求支持海量用户（亿级）、高并发读（每秒百万级）。</p>
+          </div>
+          <div class="sd-section">
+            <div class="sd-section-label">设计要点</div>
+            <ul>
+              <li><strong>规模估算</strong>：日活 1 亿，每用户平均关注 200 人，发推 QPS ~5000，读 Timeline QPS ~50 万</li>
+              <li><strong>核心难点</strong>：写扩散 vs 读扩散。大 V（百万粉）发一条推文，若写扩散需写入百万用户的 Timeline 缓存</li>
+              <li><strong>Fanout 策略</strong>：普通用户（&lt;1 万粉）写时扇出到粉丝 Feed 缓存；大 V 走读时合并（避免写放大）</li>
+              <li><strong>存储</strong>：推文表用 MySQL（按 user_id 分片）；Timeline 缓存用 Redis Sorted Set（score=时间戳）</li>
+              <li><strong>消息队列</strong>：发推事件投入 Kafka，消费者异步写扩散，削峰解耦</li>
+              <li><strong>CDN</strong>：媒体文件（图片/视频）通过 CDN 分发，减少源站压力</li>
+            </ul>
+          </div>
+          <div class="sd-section">
+            <div class="sd-section-label">推荐方案</div>
+            <div class="sd-code">用户发推
+  → 写 MySQL（推文持久化）
+  → 投 Kafka（topic: new_tweet）
+  → 消费者判断发送者粉丝数
+      ≤ 1万  → 遍历粉丝，写 Redis ZADD timeline:{uid} score=ts tweet_id
+      > 1万  → 只写推文，不扇出（大V走读时合并）
+
+用户读 Timeline
+  → Redis ZREVRANGE timeline:{uid} 0 99
+  → 大V 的推文：单独查 MySQL，合并排序
+  → 批量查推文详情（多级缓存）</div>
+            <table class="sd-table" style="margin-top:12px">
+              <tr><th>层次</th><th>技术选型</th><th>说明</th></tr>
+              <tr><td>推文存储</td><td>MySQL（按 user_id 分片）</td><td>持久化，支持复杂查询</td></tr>
+              <tr><td>Timeline 缓存</td><td>Redis Sorted Set</td><td>高速读，score=时间戳</td></tr>
+              <tr><td>消息队列</td><td>Kafka</td><td>异步扇出，削峰</td></tr>
+              <tr><td>媒体存储</td><td>对象存储 + CDN</td><td>图片/视频分发</td></tr>
+              <tr><td>搜索</td><td>Elasticsearch</td><td>推文全文检索</td></tr>
+            </table>
+          </div>
+          <div class="sd-answer">关键权衡：写扩散（降低读延迟）vs 读扩散（降低写放大）。实践中通常混合使用：普通用户写扩散，大 V 读扩散合并。</div>
+        </div>
+      </div>
+
+      <!-- SD2 URL 短链 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">2</span>
+          <span class="sd-title">设计 URL 短链服务</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个 URL 缩短服务（类似 bit.ly）。将长 URL 映射为 6~8 位短码，访问短链时 302 重定向到原始 URL。要求：写 QPS ~1000，读 QPS ~10 万，短链有效期可配置。</p>
+          </div>
+          <div class="sd-section">
+            <div class="sd-section-label">设计要点</div>
+            <ul>
+              <li><strong>短码生成</strong>：62 进制（a-z A-Z 0-9），6 位 = 56 亿种组合，满足需求</li>
+              <li><strong>发号器方案</strong>：数据库自增 ID 转 62 进制（推荐，无冲突，号段模式减少 DB 访问）</li>
+              <li><strong>哈希方案</strong>：MurmurHash 取前 6 字节转 62 进制，冲突时自增重试</li>
+              <li><strong>重定向</strong>：302（临时，不缓存，统计准确）vs 301（永久，客户端缓存，减少服务器压力）</li>
+              <li><strong>缓存</strong>：热点短链 Redis String 缓存，TTL 与短链一致</li>
+              <li><strong>去重</strong>：同一长 URL 可复用已有短码（Redis 缓存长→短的映射）</li>
+            </ul>
+          </div>
+          <div class="sd-section">
+            <div class="sd-section-label">推荐方案</div>
+            <div class="sd-code">写请求（长 URL → 短码）
+  → 检查 Redis：该长URL是否已有短码（去重）
+  → 无缓存：向发号器服务申请自增 ID（号段模式）
+  → ID 转 62 进制得到短码
+  → MySQL INSERT (short_code, long_url, expire_at)
+  → Redis SET short:{code} long_url EX ttl
+  → 返回短链
+
+读请求（短码 → 重定向）
+  → Redis GET short:{code}
+  → 未命中 → MySQL 查询 → 写回 Redis
+  → 找到 → HTTP 302 Location: long_url</div>
+            <table class="sd-table" style="margin-top:12px">
+              <tr><th>组件</th><th>技术</th><th>说明</th></tr>
+              <tr><td>发号器</td><td>MySQL auto_increment + 号段模式</td><td>每次领取 1000 个 ID，减少 DB 访问</td></tr>
+              <tr><td>持久化</td><td>MySQL（short_code 主键）</td><td>唯一约束防冲突</td></tr>
+              <tr><td>缓存</td><td>Redis String</td><td>热点短链，减少 DB 读压力</td></tr>
+              <tr><td>统计</td><td>Kafka + ClickHouse</td><td>异步统计点击量、来源</td></tr>
+            </table>
+          </div>
+          <div class="sd-answer">关键决策：302 vs 301。302 每次都回源服务器，统计数据准确但压力大；301 浏览器缓存后不再回源，省流量但统计不准。面试中选 302 + 服务端缓存是最常见答案。</div>
+        </div>
+      </div>
+
+      <!-- SD3 微信群聊 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">3</span>
+          <span class="sd-title">设计微信群聊消息系统</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计微信群聊消息系统。支持万人群，消息实时推送，离线消息存储，消息序号保证有序，支持已读/未读状态。</p>
+          </div>
+          <div class="sd-section">
+            <div class="sd-section-label">设计要点</div>
+            <ul>
+              <li><strong>消息序号（msg_id）</strong>：每个群维护单调递增序号（Redis INCR 原子操作），保证有序</li>
+              <li><strong>万人群写放大</strong>：不为每个成员写一条收件记录（写放大 1 万倍），改用群消息 + 成员游标（cursor）</li>
+              <li><strong>离线消息</strong>：用户上线后，查询各群 cursor 之后的消息，批量拉取</li>
+              <li><strong>推送模型</strong>：在线用户 WebSocket 实时推送；离线用户上线 pull；接入层 push-server 一致性哈希路由</li>
+              <li><strong>已读回执</strong>：更新 cursor 即视为已读，未读数 = 群最新 msg_id - cursor</li>
+              <li><strong>消息存储</strong>：按 group_id 分片 MySQL，冷数据归档对象存储</li>
+            </ul>
+          </div>
+          <div class="sd-section">
+            <div class="sd-section-label">推荐方案</div>
+            <div class="sd-code">发消息
+  → Redis INCR group:{gid}:seq 获取 msg_id
+  → 写 MySQL msg 表（gid, msg_id, sender, content, ts）
+  → 投 Kafka（topic: group_msg）
+  → 消费者：对在线成员 WebSocket 推送 msg_id
+
+用户上线
+  → 查 cursor 表：获取各群最后已读 msg_id
+  → SELECT * FROM msg WHERE gid=? AND msg_id > cursor LIMIT 100
+  → 推送离线消息，更新 cursor</div>
+            <table class="sd-table" style="margin-top:12px">
+              <tr><th>问题</th><th>方案</th></tr>
+              <tr><td>消息有序</td><td>群级别自增 msg_id（Redis INCR 原子）</td></tr>
+              <tr><td>万人群写放大</td><td>不写扩散，成员维护 cursor，上线 pull</td></tr>
+              <tr><td>实时推送</td><td>WebSocket 长连接，接入层一致性哈希路由</td></tr>
+              <tr><td>未读数</td><td>群最新 seq - cursor，Redis 缓存</td></tr>
+            </table>
+          </div>
+          <div class="sd-answer">关键权衡：推（push）vs 拉（pull）。万人群不做写扩散，改为 cursor + pull，是解决写放大的核心思路。实时性靠 WebSocket 推 msg_id，内容靠 pull 补全。</div>
+        </div>
+      </div>
+
+      <!-- SD4 秒杀系统 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">4</span>
+          <span class="sd-title">设计秒杀系统</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个双十一秒杀系统。1000 件商品，100 万用户同时抢购，要求不超卖、不少卖、高可用，系统 QPS 峰值可达 10 万。</p>
+          </div>
+          <div class="sd-section">
+            <div class="sd-section-label">设计要点</div>
+            <ul>
+              <li><strong>流量漏斗</strong>：请求在到达数据库之前应被大量过滤，只有极少数能到扣库存环节</li>
+              <li><strong>限流</strong>：Nginx 层令牌桶限流 → 网关层用户级限频（同一用户 1 秒只处理 1 次）→ MQ 削峰</li>
+              <li><strong>Redis 扣库存</strong>：Lua 脚本原子执行"判断库存 > 0 + DECR"，避免 ABA 问题</li>
+              <li><strong>幂等性</strong>：Redis SET 用户+商品唯一键（NX），防止同一用户重复购买</li>
+              <li><strong>异步下单</strong>：扣库存成功后投 Kafka，消费者异步写 DB；用户轮询订单状态</li>
+              <li><strong>DB 兜底</strong>：消费者写 DB 时用乐观锁（WHERE stock &gt; 0）再次保证不超卖</li>
+            </ul>
+          </div>
+          <div class="sd-section">
+            <div class="sd-section-label">推荐方案</div>
+            <div class="sd-code">请求链路：
+  用户 → CDN（静态资源缓存，不回源）
+       → Nginx 限流（令牌桶，10w→1w QPS）
+       → API Gateway（用户级限频、鉴权）
+       → 秒杀服务
+           1. Redis SET seckill:uid:gid 1 NX EX 3  （去重）
+           2. Lua: if stock>0 then DECR stock end   （原子扣库存）
+              → 失败 → 返回"已售罄"
+           3. 投 Kafka（topic: seckill_order）
+           4. 返回"排队中"
+
+消费者：
+  → 从 Kafka 消费
+  → MySQL INSERT order + UPDATE stock WHERE stock>0（乐观锁）
+  → 写订单状态到 Redis
+  → 用户轮询 GET /order/status</div>
+            <table class="sd-table" style="margin-top:12px">
+              <tr><th>问题</th><th>方案</th><th>原因</th></tr>
+              <tr><td>超卖</td><td>Redis Lua 原子扣减 + 乐观锁兜底</td><td>原子操作 + DB 最终校验</td></tr>
+              <tr><td>重复购买</td><td>Redis NX 去重键</td><td>原子 SET，TTL 自动清理</td></tr>
+              <tr><td>流量削峰</td><td>Kafka 缓冲 + 消费者异步写 DB</td><td>解耦，保护 DB</td></tr>
+            </table>
+          </div>
+          <div class="sd-answer">关键思路：流量漏斗 + 原子扣减 + 异步化。库存超卖的本质是非原子的"读-判断-写"，Redis Lua 脚本将这三步合并为原子操作是标准解法。</div>
+        </div>
+      </div>
+
+      <!-- SD5 消息队列 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">5</span>
+          <span class="sd-title">设计消息队列（简化版 Kafka）</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个简化版消息队列系统，支持：Producer 发布消息、Consumer 订阅消费、消息持久化、至少一次投递（at-least-once）、消费者组（Consumer Group）负载均衡。</p>
+          </div>
+          <div class="sd-section">
+            <div class="sd-section-label">设计要点</div>
+            <ul>
+              <li><strong>核心抽象</strong>：Topic → Partition（分区）→ Segment（分段日志文件）</li>
+              <li><strong>顺序写磁盘</strong>：消息追加写到 Partition 日志（Append-Only），顺序 I/O 接近内存速度</li>
+              <li><strong>Offset</strong>：消费者维护消费位点，重启后从上次 offset 继续，实现 at-least-once</li>
+              <li><strong>Consumer Group</strong>：同一 Group 内，一个 Partition 只被一个 Consumer 消费，保证组内不重复消费</li>
+              <li><strong>副本（Replication）</strong>：每个 Partition 有 N 个副本，Leader 接收读写，Follower 同步；ISR 机制保证持久化</li>
+              <li><strong>稀疏索引</strong>：每隔 4KB 记录一个 offset→文件位置，加速随机读</li>
+            </ul>
+          </div>
+          <div class="sd-section">
+            <div class="sd-section-label">推荐方案</div>
+            <div class="sd-code">存储结构：
+  /data/topic-name/
+    partition-0/
+      00000000.log    ← 消息文件（顺序追加）
+      00000000.index  ← 稀疏 offset 索引
+    partition-1/ ...
+
+写入流程：
+  Producer → 按 key hash 选 Partition（无 key 则轮询）
+           → 发送到 Partition Leader
+           → Leader 追加写 .log
+           → ISR 内 Follower 同步确认后 ack
+
+消费流程：
+  Consumer → 加入 ConsumerGroup，Coordinator 分配 Partition
+           → 从 committed offset 开始 Fetch
+           → 处理成功 → Commit offset
+           → 失败 → 不 commit，下次重新投递（at-least-once）</div>
+            <table class="sd-table" style="margin-top:12px">
+              <tr><th>特性</th><th>实现</th></tr>
+              <tr><td>高吞吐</td><td>顺序写磁盘 + 零拷贝（sendfile）</td></tr>
+              <tr><td>持久化</td><td>Append-Only 日志，多副本 ISR</td></tr>
+              <tr><td>有序</td><td>同一 Partition 内严格有序</td></tr>
+              <tr><td>负载均衡</td><td>Partition 分配给 Consumer Group 成员</td></tr>
+              <tr><td>容灾</td><td>ISR 副本 + Leader 自动选举</td></tr>
+            </table>
+          </div>
+          <div class="sd-answer">关键设计：顺序写 + Partition 并行是 Kafka 高吞吐的核心。Consumer Offset 由消费者自己维护，使得重放（replay）和 at-least-once 投递天然支持。</div>
+        </div>
       </div>
 
     </section>
@@ -4421,6 +4743,14 @@ Object.entries(mapping).forEach(([elemId, codeKey]) => {
 function togglePuzzle(header) {
   const body = header.nextElementSibling;
   const btn  = header.querySelector('.puzzle-toggle');
+  const open = body.classList.toggle('open');
+  btn.textContent = open ? '收起' : '展开';
+}
+
+// ── SysDesign toggle ───────────────────────────────────────────────────────
+function toggleSD(header) {
+  const body = header.nextElementSibling;
+  const btn  = header.querySelector('.sd-toggle');
   const open = body.classList.toggle('open');
   btn.textContent = open ? '收起' : '展开';
 }
