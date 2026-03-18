@@ -379,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题 · 59 智力题 · 7 系统设计</span>
+  <span class="badge">9 题 · 59 智力题 · 8 系统设计</span>
 </header>
 
 <div class="layout">
@@ -2901,6 +2901,123 @@
           </div>
 
           <div class="sd-answer">核心权衡：推模式（低读延迟）vs 拉模式（低写代价）。生产环境一定是混合模式——普通用户推、大 V 拉。面试答出「大 V 阈值 + 混合 Fanout + 归并排序 + 游标分页」四点，基本覆盖考官预期。</div>
+        </div>
+      </div>
+
+      <!-- SD8 登录认证系统 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">8</span>
+          <span class="sd-title">设计多设备登录与踢人下线的认证系统</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个支持多设备登录、踢人下线的登录认证系统。要求：同一账号可在手机/PC/平板同时登录；支持配置「同类型设备互踢」（如只允许一台手机在线）；Token 无状态但支持主动失效；安全可审计。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">Token 方案选型</div>
+            <table class="sd-table">
+              <tr><th>方案</th><th>原理</th><th>优点</th><th>缺点</th></tr>
+              <tr>
+                <td><strong>Session + Cookie</strong></td>
+                <td>服务端存 session，客户端持 session_id Cookie</td>
+                <td>主动失效简单，直接删 session</td>
+                <td>有状态，水平扩展需 session 共享（Redis）；跨域麻烦</td>
+              </tr>
+              <tr>
+                <td><strong>JWT（纯无状态）</strong></td>
+                <td>Token 自包含（uid/exp/claims），服务端不存状态，验签即可</td>
+                <td>无状态，水平扩展友好；无 DB 查询</td>
+                <td>❌ 无法主动失效；Token 泄露在过期前无法撤销</td>
+              </tr>
+              <tr>
+                <td><strong>JWT + Redis 黑名单</strong></td>
+                <td>颁发 JWT 同时在 Redis 记录 token_id；踢人时写黑名单；验证时查黑名单</td>
+                <td>兼顾无状态解析性能与主动失效能力</td>
+                <td>每次请求多一次 Redis 查询；黑名单需清理</td>
+              </tr>
+              <tr>
+                <td><strong>引用 Token（Opaque Token）</strong></td>
+                <td>Token 是随机字符串，服务端 Redis 存 token→session 映射</td>
+                <td>✅ 主动失效直接删 Redis Key；支持多设备精细管理</td>
+                <td>每次请求必须查 Redis；token 无自解析能力</td>
+              </tr>
+            </table>
+            <p style="margin-top:8px;font-size:13px;color:#374151">💡 <strong>推荐</strong>：Access Token 用短期 JWT（15min）+ Refresh Token 用 Opaque Token 存 Redis，兼顾性能与可控性。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">多设备登录设计</div>
+            <div class="sd-code">Redis 数据结构（Hash）：
+  key:   sessions:{uid}
+  field: {device_type}:{device_id}        ← 设备唯一标识
+  value: {token_id, refresh_token, login_at, ip, ua}
+
+设备类型枚举：mobile / pc / tablet / tv / web
+
+登录流程：
+  1. 验证账号密码
+  2. 检查 sessions:{uid} 中同类型设备数量
+     → 超出限制（如 mobile 只允许 1 台）→ 删除最旧设备的 session（踢人）
+  3. HSET sessions:{uid} "mobile:{device_id}" session_json
+  4. 生成 JWT（payload: uid, token_id, device_id）
+  5. 生成 Refresh Token → SET refresh:{token_id} session_json EX 30d
+  6. 返回 access_token + refresh_token</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">踢人下线方案</div>
+            <ul>
+              <li><strong>同类型设备互踢</strong>：新设备登录时，HDEL 同类型旧 device 的 session，并将旧 token_id 写入黑名单（TTL = access token 剩余有效期）</li>
+              <li><strong>管理员踢人（封号/强制下线）</strong>：删除 sessions:{uid} 下所有 field；将所有存活 token_id 批量写黑名单；用户下次请求命中黑名单 → 401</li>
+              <li><strong>用户主动退出单设备</strong>：HDEL sessions:{uid} {device_key}；当前 token_id 写黑名单</li>
+              <li><strong>用户主动退出所有设备</strong>：DEL sessions:{uid}；版本号方案：Redis INCR uid:{uid}:token_ver，JWT 中携带版本号，验证时比对版本，版本不符即失效</li>
+            </ul>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">完整认证流程</div>
+            <div class="sd-code">【请求验证（每次 API 调用）】
+  1. 解析 JWT Header/Payload（本地，不查 DB）
+  2. 验签 + 检查 exp（过期直接 401）
+  3. 查 Redis blacklist:{token_id} → 命中则 401（已被踢）
+  4. 查 sessions:{uid} 中是否存在该 device → 不存在则 401
+  5. 通过 → 注入 uid 到请求上下文
+
+【Access Token 过期，用 Refresh Token 续期】
+  1. 客户端携带 refresh_token 请求 /auth/refresh
+  2. 查 Redis refresh:{token_id} → 不存在则 401
+  3. 检查 sessions:{uid} 中该设备是否仍在线
+  4. 颁发新 JWT（新 token_id），更新 Redis session
+  5. 旧 token_id 写黑名单（TTL 15min，即旧 JWT 剩余时长）
+
+【Token 版本号方案（一次性踢所有设备）】
+  JWT payload 增加字段 ver，登录时从 Redis 读取当前版本
+  用户触发"全部下线"→ INCR uid:{uid}:token_ver
+  后续所有请求验证时：JWT.ver != Redis.ver → 401，无需维护黑名单列表</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">存储与安全</div>
+            <table class="sd-table">
+              <tr><th>数据</th><th>存储</th><th>TTL</th></tr>
+              <tr><td>设备 Session 列表</td><td>Redis Hash <code>sessions:{uid}</code></td><td>30 天（随 Refresh Token）</td></tr>
+              <tr><td>Refresh Token</td><td>Redis String <code>refresh:{token_id}</code></td><td>30 天</td></tr>
+              <tr><td>Token 黑名单</td><td>Redis String <code>blacklist:{token_id}</code></td><td>= Access Token 剩余有效期</td></tr>
+              <tr><td>Token 版本号</td><td>Redis String <code>token_ver:{uid}</code></td><td>永久（随账号生命周期）</td></tr>
+              <tr><td>登录审计日志</td><td>MySQL / ClickHouse</td><td>90 天</td></tr>
+            </table>
+            <ul style="margin-top:10px">
+              <li><strong>Refresh Token 轮换（Rotation）</strong>：每次续期颁发新 Refresh Token，旧的立即失效；检测到旧 Refresh Token 被重用时视为泄露，强制下线所有设备</li>
+              <li><strong>设备指纹</strong>：device_id 由 UA + IP + 硬件指纹哈希生成，防止伪造设备类型绕过互踢</li>
+              <li><strong>HTTPS + HttpOnly Cookie</strong>：Refresh Token 建议存 HttpOnly Cookie，防 XSS 窃取</li>
+            </ul>
+          </div>
+
+          <div class="sd-answer">核心权衡：JWT 无状态（性能好）vs Opaque Token（可主动失效）。生产方案：短期 JWT 做 Access Token + Opaque Refresh Token 存 Redis，踢人时删 session + 写黑名单。「全部下线」用 token_ver 版本号方案，避免维护大量黑名单 Key。</div>
         </div>
       </div>
 

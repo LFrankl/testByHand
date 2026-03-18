@@ -319,3 +319,40 @@
 ```
 
 **答案**：混合 Fanout 是核心答案。普通用户推模式保证低读延迟，大 V 走拉模式避免写放大，读取时归并两路结果。游标分页、Timeline 缓存裁剪、热点多级缓存是加分项。
+
+---
+
+## 8. 设计多设备登录与踢人下线的认证系统
+
+**题目**
+
+设计一个支持多设备登录、踢人下线的登录认证系统。要求：同一账号可在手机/PC/平板同时登录；支持配置「同类型设备互踢」（如只允许一台手机在线）；Token 无状态但支持主动失效；安全可审计。
+
+**设计要点**
+
+Token 方案选型：
+
+| 方案 | 优点 | 缺点 |
+|------|------|------|
+| Session + Cookie | 主动失效简单 | 有状态，需共享 Session |
+| JWT 纯无状态 | 水平扩展友好 | ❌ 无法主动失效 |
+| JWT + Redis 黑名单 | 兼顾性能与失效 | 每请求多一次 Redis 查询 |
+| Opaque Token（引用 Token） | 精细管理多设备 | 每次必须查 Redis |
+
+推荐：Access Token = 短期 JWT（15min）+ Refresh Token = Opaque Token 存 Redis。
+
+多设备管理：
+- Redis Hash `sessions:{uid}`，field = `{device_type}:{device_id}`，value = session JSON
+- 新设备登录时检查同类型设备数，超限则踢最旧的
+
+踢人下线方案：
+- **同类型互踢**：HDEL 旧设备 session + 旧 token_id 写黑名单（TTL = JWT 剩余时长）
+- **管理员强制下线**：DEL sessions:{uid} + 批量写黑名单
+- **全部下线**：`INCR token_ver:{uid}`，JWT 中携带版本号，版本不符即 401，无需维护黑名单列表
+
+安全要点：
+- Refresh Token Rotation：每次续期颁发新 Refresh Token，旧的立即失效；重用检测视为泄露，全部下线
+- HTTPS + HttpOnly Cookie 存 Refresh Token，防 XSS 窃取
+- 设备指纹哈希防止伪造 device_id 绕过互踢
+
+**答案**：短期 JWT + Opaque Refresh Token + Redis sessions Hash 管理多设备；踢人 = 删 session + 写黑名单；全部下线用 token_ver 版本号方案，避免黑名单 Key 爆炸。
