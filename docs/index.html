@@ -379,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题 · 59 智力题 · 12 系统设计</span>
+  <span class="badge">9 题 · 59 智力题 · 13 系统设计</span>
 </header>
 
 <div class="layout">
@@ -3753,6 +3753,229 @@ Layer 3: 远程服务端（兜底）
           </div>
 
           <div class="sd-answer">核心设计：长轮询（非阻塞挂起 60s）实现准实时推送，服务端压力远低于 WebSocket；客户端三层缓存（内存→文件→远程）保证配置中心宕机时业务不受影响；发布快照 + release_history 支持任意版本回滚和 diff 审计；灰度规则按 IP/标签匹配，客户端上报标识，服务端推送差异配置。</div>
+        </div>
+      </div>
+
+      <!-- SD13 分布式限流 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">13</span>
+          <span class="sd-title">设计分布式限流系统</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个分布式限流系统，支持多种限流算法、多维度限流（用户/IP/接口/租户）、动态调整阈值、高性能（单机百万 QPS）、限流失败时优雅降级。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">四种限流算法对比</div>
+            <table class="sd-table">
+              <tr><th>算法</th><th>原理</th><th>优点</th><th>缺点</th><th>适用</th></tr>
+              <tr>
+                <td><strong>固定窗口</strong></td>
+                <td>时间切成固定窗口（如每秒），窗口内计数，超阈值拒绝</td>
+                <td>实现最简单</td>
+                <td>窗口边界突刺：窗口末尾+下窗口开头可瞬间通过 2×QPS</td>
+                <td>对精度要求低的场景</td>
+              </tr>
+              <tr>
+                <td><strong>滑动窗口</strong></td>
+                <td>维护最近 N 个小格（如 10 个 100ms 格）的计数，滑动求和</td>
+                <td>消除边界突刺，精度高</td>
+                <td>内存 O(格数)；精度与格数成正比</td>
+                <td>接口级限流，精度要求高</td>
+              </tr>
+              <tr>
+                <td><strong>漏桶</strong></td>
+                <td>请求入桶，以固定速率流出；桶满则拒绝</td>
+                <td>输出速率绝对平滑，保护下游</td>
+                <td>无法应对合法突发流量；实现略复杂</td>
+                <td>需要严格平滑输出（如 MQ 消费）</td>
+              </tr>
+              <tr>
+                <td><strong>令牌桶</strong></td>
+                <td>按固定速率向桶中放令牌，请求消耗令牌；桶空则拒绝</td>
+                <td>✅ 允许适度突发（桶中积累的令牌）；实现简单</td>
+                <td>突发过大仍有风险</td>
+                <td>✅ 大多数限流场景首选</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">单机 vs 分布式限流</div>
+            <table class="sd-table">
+              <tr><th>维度</th><th>单机限流</th><th>分布式限流</th></tr>
+              <tr><td>实现</td><td>进程内（Guava RateLimiter / 原子计数）</td><td>中心化存储（Redis）或协调节点</td></tr>
+              <tr><td>性能</td><td>✅ 极高（无网络开销）</td><td>每次请求一次 Redis RTT（~1ms）</td></tr>
+              <tr><td>精度</td><td>只控制单节点，多节点实际放量 = 阈值×节点数</td><td>✅ 全局精确控制</td></tr>
+              <tr><td>适用</td><td>单机保护自身（本地限流）</td><td>全局 QPS 控制（如 API 配额）</td></tr>
+            </table>
+            <p style="font-size:13px;color:#374151;margin-top:8px">💡 生产中两层叠加：本地令牌桶（一次内存操作，拦截大部分流量）+ Redis 分布式计数（精确控制全局上限）。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">Redis 实现：滑动窗口（Lua 脚本）</div>
+            <div class="sd-code">-- 滑动窗口限流 Lua 脚本（原子执行）
+-- KEYS[1]: 限流 key（如 ratelimit:uid:123:api:/order）
+-- ARGV[1]: 当前时间戳（ms）
+-- ARGV[2]: 窗口大小（ms，如 1000 = 1秒）
+-- ARGV[3]: 限流阈值（如 100）
+-- ARGV[4]: 唯一请求 ID（防重复计数）
+
+local key      = KEYS[1]
+local now      = tonumber(ARGV[1])
+local window   = tonumber(ARGV[2])
+local limit    = tonumber(ARGV[3])
+local req_id   = ARGV[4]
+
+-- 移除窗口外的旧记录
+redis.call('ZREMRANGEBYSCORE', key, '-inf', now - window)
+
+-- 当前窗口内请求数
+local count = redis.call('ZCARD', key)
+
+if count < limit then
+    -- 未超限：记录本次请求
+    redis.call('ZADD', key, now, req_id)
+    redis.call('PEXPIRE', key, window)
+    return 1   -- 允许
+else
+    return 0   -- 拒绝
+end
+
+-- 时间复杂度：O(log N + M)，N=窗口内请求数，M=过期请求数
+-- 原子性：Lua 脚本在 Redis 单线程中执行，无竞态</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">Redis 实现：令牌桶（Lua 脚本）</div>
+            <div class="sd-code">-- 令牌桶限流 Lua 脚本
+-- KEYS[1]: bucket key
+-- ARGV[1]: 当前时间戳（ms）
+-- ARGV[2]: 桶容量（burst）
+-- ARGV[3]: 令牌生成速率（个/ms）
+-- ARGV[4]: 请求消耗令牌数（通常为 1）
+
+local key        = KEYS[1]
+local now        = tonumber(ARGV[1])
+local capacity   = tonumber(ARGV[2])
+local rate       = tonumber(ARGV[3])   -- tokens per ms
+local requested  = tonumber(ARGV[4])
+
+local last_tokens = tonumber(redis.call('HGET', key, 'tokens') or capacity)
+local last_time   = tonumber(redis.call('HGET', key, 'ts')     or now)
+
+-- 根据时间流逝补充令牌
+local elapsed     = math.max(0, now - last_time)
+local new_tokens  = math.min(capacity, last_tokens + elapsed * rate)
+
+if new_tokens >= requested then
+    -- 有足够令牌
+    redis.call('HSET', key, 'tokens', new_tokens - requested, 'ts', now)
+    redis.call('PEXPIRE', key, 60000)
+    return 1   -- 允许
+else
+    -- 令牌不足，更新时间戳（继续积累）
+    redis.call('HSET', key, 'tokens', new_tokens, 'ts', now)
+    redis.call('PEXPIRE', key, 60000)
+    return 0   -- 拒绝
+end</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">多维度限流 Key 设计</div>
+            <div class="sd-code">限流 Key 命名规范：
+  ratelimit:{维度}:{标识}:{接口}:{窗口}
+
+常见维度组合：
+  ratelimit:user:123:/api/order:1s          # 用户级：每秒最多 N 次
+  ratelimit:ip:1.2.3.4:/api/login:60s      # IP 级：每分钟最多 N 次登录
+  ratelimit:tenant:abc:/api/search:1s      # 租户级：API 配额
+  ratelimit:api:/api/pay:1s               # 接口级全局：总 QPS 上限
+  ratelimit:user:123:global:1d            # 用户日配额（如发短信次数）
+
+多维度叠加（AND 语义）：
+  一次请求同时检查多个维度，任意一个超限则拒绝
+  Pipeline 批量执行多个 Lua 脚本，减少 RTT：
+    pipe.eval(user_script, ...)
+    pipe.eval(ip_script, ...)
+    pipe.eval(api_script, ...)
+    results = pipe.execute()
+    if any(r == 0 for r in results): reject()</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">高性能架构：两层限流</div>
+            <div class="sd-code">【Layer 1：本地令牌桶（进程内，无网络开销）】
+每个服务节点维护本地令牌桶：
+  • 阈值 = 全局阈值 / 节点数（定期从配置中心同步）
+  • 命中率 ~95%，拦截绝大多数超量请求
+  • 实现：Guava RateLimiter / 原子操作 + 时间戳
+
+【Layer 2：Redis 全局精确计数（兜底）】
+  只有通过本地限流的请求才走 Redis
+  全局精确控制，防止节点扩缩容导致本地阈值计算偏差
+
+【节点扩缩容处理】
+  节点数变化时重新计算本地阈值：
+  local_limit = global_limit / current_node_count
+  current_node_count 从服务注册中心（Nacos/Eureka）实时获取
+
+【性能指标】
+  Layer 1（本地）：~100ns，单机 1000 万 QPS
+  Layer 2（Redis）：~1ms RTT，单机 10 万 QPS
+  实际：95% 请求走 Layer 1，整体性能接近单机水平</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">动态阈值 + 优雅降级</div>
+            <div class="sd-code">【动态阈值（对接配置中心）】
+  限流规则存储在配置中心（Apollo/Nacos）：
+  {
+    "key": "ratelimit:user:*:/api/order:1s",
+    "limit": 100,
+    "algorithm": "sliding_window",
+    "window_ms": 1000
+  }
+  配置变更 → 长轮询推送 → 客户端热更新限流规则（无需重启）
+
+【被限流时的处理策略】
+  1. 直接拒绝（429 Too Many Requests）
+     适合：API 接口，明确告知客户端
+     响应：{"code":429,"msg":"请求过于频繁，请稍后重试","retry_after":1}
+
+  2. 排队等待（适合允许轻微延迟的场景）
+     请求进入等待队列，令牌可用时继续处理
+     超过最大等待时间则放弃
+
+  3. 降级服务（返回兜底数据）
+     触发限流 → 返回缓存的旧数据 / 默认值
+     适合：读请求、非核心逻辑
+
+  4. 熔断（连续超限触发）
+     短时间内超限比例过高 → 触发熔断，直接拒绝一段时间
+     配合 Sentinel / Hystrix 实现</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">Redis 集群下的精度问题</div>
+            <ul>
+              <li><strong>同一 Key 只在一个节点</strong>：Redis Cluster 按 key hash 分槽，同一限流 key 固定在一个节点，无需跨节点计数，天然一致</li>
+              <li><strong>多 Key 原子性</strong>：多维度同时检查时，多个 key 可能在不同节点，Pipeline 可并行但非原子；接受极小概率的超限（通常可容忍）</li>
+              <li><strong>Redis 单点故障</strong>：Redis 不可用时的策略：
+                <ul>
+                  <li>Fail Open（放行）：可用性优先，适合大多数业务</li>
+                  <li>Fail Closed（拒绝）：安全性优先，适合支付等核心接口</li>
+                  <li>降级到本地限流：用本地令牌桶单独撑，接受精度下降</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+
+          <div class="sd-answer">核心答案：令牌桶（允许突发）+ Redis Lua 脚本（原子执行保证精度）+ 两层架构（本地令牌桶拦截 95% + Redis 全局兜底）+ Pipeline 多维度并行检查。Redis 故障时 Fail Open 保可用性，本地限流降级兜底。动态阈值通过配置中心热推送，无需重启服务。</div>
         </div>
       </div>
 
