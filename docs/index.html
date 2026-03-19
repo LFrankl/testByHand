@@ -379,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题 · 59 智力题 · 11 系统设计</span>
+  <span class="badge">9 题 · 59 智力题 · 12 系统设计</span>
 </header>
 
 <div class="layout">
@@ -3582,6 +3582,177 @@ L3: MySQL（按 uid % 1024 分片，post_id Snowflake 含时间戳）
           </div>
 
           <div class="sd-answer">关键设计三点：① 纯推模式（写扩散）——好友上限 5000 可控，Pipeline 批量 ZADD；② 共同好友互动过滤——Redis SINTER 两个 Set 取交集，热帖截断前 N 个；③ 可见性在写时（Fanout 阶段）过滤，读时不鉴权保证低延迟。进程内 L1 缓存是降低 P99 延迟的最有效手段。</div>
+        </div>
+      </div>
+
+      <!-- SD12 分布式配置中心 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">12</span>
+          <span class="sd-title">设计分布式配置中心</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个分布式配置中心（类 Apollo/Nacos）。支持：配置实时推送（秒级生效）、多环境/多集群隔离、灰度发布、版本回滚、权限控制、配置变更审计。服务端高可用，客户端本地缓存保证服务端宕机时业务不受影响。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">核心模型</div>
+            <div class="sd-code">配置寻址四元组：
+  AppId + Environment + Cluster + Namespace
+
+  AppId:       应用标识（如 live.anchor.ecology）
+  Environment: 环境（prod / pre / uat / fat）
+  Cluster:     集群（default / beijing / shanghai）
+  Namespace:   配置分组（app.properties / datasource.yml / ...）
+
+每条配置：
+  key  → string
+  value → string（支持多格式：properties / yaml / json / xml）
+  version → 单调递增（每次修改 +1）
+  is_deleted → 软删除</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">配置推送：长轮询（Long Polling）</div>
+            <p style="font-size:13.5px;color:#374151;margin-bottom:8px">配置推送是配置中心最核心的问题。方案对比：</p>
+            <table class="sd-table">
+              <tr><th>方案</th><th>实时性</th><th>服务端压力</th><th>说明</th></tr>
+              <tr><td>短轮询（每秒请求）</td><td>秒级</td><td>❌ 极高，无效请求多</td><td>最简单但不可用于生产</td></tr>
+              <tr><td>WebSocket 长连接</td><td>毫秒级</td><td>中（连接数多）</td><td>服务端需维护大量连接状态</td></tr>
+              <tr><td><strong>长轮询（推荐）</strong></td><td>秒级</td><td>✅ 低，连接挂起不占 CPU</td><td>Apollo/Nacos 均采用此方案</td></tr>
+              <tr><td>SSE（Server-Sent Events）</td><td>毫秒级</td><td>中</td><td>单向推送，HTTP/2 友好</td></tr>
+            </table>
+            <div class="sd-code" style="margin-top:10px">【长轮询流程】
+
+客户端请求：
+  GET /notifications/v2?appId=xxx&cluster=default&namespace=app&notificationId=5
+  （携带本地已知的最新 notificationId）
+
+服务端处理：
+  1. 比较客户端 notificationId vs 服务端当前版本
+  2. 版本一致（无变更）→ 挂起请求，hold 住最长 60s
+  3. 等待期间若有配置变更：
+     → 从 DB/内存通知对应的挂起请求
+     → 立即响应 HTTP 200，返回新 notificationId
+  4. 60s 超时无变更 → 响应 HTTP 304（Not Modified）
+  5. 客户端收到 200 → 立即发起 /configs 请求拉取新配置
+  6. 客户端收到 304 → 立即发起下一轮长轮询
+
+服务端实现要点：
+  • Servlet 3.0 AsyncContext / Netty 异步 Handler（非阻塞，不占线程）
+  • 变更通知：DB 写入后通知内存中挂起的对应请求
+  • 分组管理：按 AppId+Cluster+Namespace 分组挂起请求，变更时精准通知</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">服务端架构</div>
+            <div class="sd-code">┌─────────────────────────────────────────────────────────┐
+│                     Config Service                       │
+│                                                          │
+│   Admin API      Config API       Notification Service   │
+│  （写配置）      （读配置）         （长轮询挂起/通知）     │
+└────────┬────────────────────────────────────┬────────────┘
+         │                                    │
+    ┌────▼────┐                        ┌──────▼──────┐
+    │  MySQL  │  ←── 写配置 ─────────  │   消息总线   │
+    │（持久化）│  ──── binlog ────────→ │ (Kafka/MQ)  │
+    └────┬────┘                        └──────┬──────┘
+         │                                    │
+    ┌────▼──────────────────────────────────▼────┐
+    │            Config Service 集群              │
+    │  实例1    实例2    实例3    ...              │
+    │  各自维护内存中挂起请求的 Map                │
+    └─────────────────────────────────────────────┘
+
+多实例一致性：
+  配置写入 MySQL → 发布变更事件到 MQ（或 DB 轮询）
+  → 所有 Config Service 实例收到事件
+  → 各自通知本机挂起的对应长轮询请求</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">客户端本地缓存（容灾关键）</div>
+            <div class="sd-code">【三层容灾】
+
+Layer 1: 内存缓存（最快）
+  启动后将配置加载到内存 Map，所有业务读取走内存
+  长轮询有变更时更新内存 Map + 触发监听回调
+
+Layer 2: 本地文件缓存
+  每次从服务端拉取配置后，序列化写入本地磁盘
+  路径：~/.apollo/{env}/{appId}/{cluster}/{namespace}.properties
+  内容：配置 KV + version + 校验和
+
+Layer 3: 远程服务端（兜底）
+  启动时若内存/文件都没有：实时拉取
+  服务端不可用时：使用文件缓存启动（降级）
+
+【启动流程】
+  1. 尝试从本地文件加载配置（无需等待服务端）
+  2. 异步连接服务端，拉取最新配置
+  3. 若服务端版本 > 本地版本 → 更新内存 + 文件缓存
+  4. 开始长轮询监听变更
+
+关键设计：
+  即使配置中心完全宕机，客户端仍能用文件缓存正常启动
+  业务代码只读内存缓存，不受网络抖动影响</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">灰度发布与版本回滚</div>
+            <div class="sd-code">【灰度发布（Gray Release）】
+灰度规则存储：
+  gray_rules 表：namespace_id, rule_type, rule_value, gray_config
+  rule_type: IP段 / 机器名 / 自定义标签
+
+推送时判断：
+  客户端携带 clientIp / grayLabel 等标识
+  服务端匹配灰度规则：
+    命中 → 返回灰度配置
+    未命中 → 返回全量配置
+
+发布流程：
+  1. 创建灰度版本（不影响正式版本）
+  2. 配置灰度规则（如 IP 白名单 / 1% 机器）
+  3. 逐步扩大灰度比例，观察指标
+  4. 全量发布 → 灰度版本合并到正式版本
+
+【版本管理与回滚】
+  每次修改：INSERT release_history (namespace_id, config_snapshot, operator, ts)
+  回滚：取历史快照的 config_snapshot，覆盖当前配置，version +1
+  查看 diff：对比两个版本的 config_snapshot
+  审计日志：记录 who / what / when / before / after</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">存储设计</div>
+            <table class="sd-table">
+              <tr><th>表</th><th>核心字段</th><th>说明</th></tr>
+              <tr><td>app</td><td>app_id, name, owner</td><td>应用注册</td></tr>
+              <tr><td>namespace</td><td>app_id, env, cluster, name, format</td><td>配置分组</td></tr>
+              <tr><td>item</td><td>namespace_id, key, value, version, deleted</td><td>配置 KV，version 单调递增</td></tr>
+              <tr><td>release</td><td>namespace_id, config_json, version, ts</td><td>发布快照（完整 KV JSON）</td></tr>
+              <tr><td>release_history</td><td>namespace_id, release_id, type, operator</td><td>变更审计，支持回滚</td></tr>
+              <tr><td>gray_rule</td><td>namespace_id, rule, gray_release_id</td><td>灰度规则</td></tr>
+              <tr><td>permission</td><td>app_id, user, role</td><td>权限控制（owner/editor/viewer）</td></tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">高可用设计</div>
+            <ul>
+              <li><strong>服务端无状态</strong>：Config Service 多实例部署，任意实例宕机不影响服务；长轮询挂起的请求仅损失该实例上的连接，客户端重连即可</li>
+              <li><strong>MySQL 主从</strong>：读请求走从库（配置读多写少），写请求走主库；从库延迟场景下客户端通过长轮询最终一致</li>
+              <li><strong>客户端重试</strong>：服务端不可用时，客户端指数退避重试（1s→2s→4s→...→60s），不影响业务</li>
+              <li><strong>本地文件缓存</strong>：完全兜底，服务端全部宕机时业务仍用上次缓存的配置正常运行</li>
+              <li><strong>Meta Server</strong>：客户端不硬编码 Config Service 地址，通过 Meta Server（Eureka/Nacos）服务发现，Config Service 扩缩容对客户端透明</li>
+            </ul>
+          </div>
+
+          <div class="sd-answer">核心设计：长轮询（非阻塞挂起 60s）实现准实时推送，服务端压力远低于 WebSocket；客户端三层缓存（内存→文件→远程）保证配置中心宕机时业务不受影响；发布快照 + release_history 支持任意版本回滚和 diff 审计；灰度规则按 IP/标签匹配，客户端上报标识，服务端推送差异配置。</div>
         </div>
       </div>
 
