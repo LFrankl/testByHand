@@ -379,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题 · 59 智力题 · 10 系统设计</span>
+  <span class="badge">9 题 · 59 智力题 · 11 系统设计</span>
 </header>
 
 <div class="layout">
@@ -3426,6 +3426,162 @@ for each msg:
           </div>
 
           <div class="sd-answer">最优方案：MQ 延迟消息（RocketMQ 事务消息）+ Cron 兜底。事务消息解决"下单写 DB 与发延迟消息"的原子性问题，是方案⑤的完整版；无 RocketMQ 时用本地消息表（outbox 表 + 扫描发送）兜底。无论哪种方案，消费者幂等（CAS 更新状态）不可省。</div>
+        </div>
+      </div>
+
+      <!-- SD11 朋友圈 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">11</span>
+          <span class="sd-title">设计朋友圈（高性能版）</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计微信朋友圈系统。核心特点：<strong>强关系双向好友</strong>（区别于微博单向关注）、<strong>可见性控制</strong>（分组可见/不可见）、<strong>互动数据隔离</strong>（只看共同好友的点赞/评论）。日活 10 亿，发圈 QPS ~100 万，读 QPS ~1000 万，延迟 &lt;100ms。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">朋友圈 vs 微博 Feed 流的核心差异</div>
+            <table class="sd-table">
+              <tr><th>维度</th><th>微博 Feed</th><th>朋友圈</th></tr>
+              <tr><td>关系</td><td>单向关注</td><td>双向好友（强关系）</td></tr>
+              <tr><td>可见性</td><td>全公开 / 粉丝可见</td><td>好友可见 + 分组白/黑名单</td></tr>
+              <tr><td>互动可见</td><td>全量评论/点赞对所有人可见</td><td><strong>只展示双方共同好友的互动</strong></td></tr>
+              <tr><td>大 V 场景</td><td>千万粉，写扩散代价极高</td><td>好友上限 5000，写扩散可控</td></tr>
+              <tr><td>Fanout 策略</td><td>混合（普通推 + 大 V 拉）</td><td><strong>纯推模式（写扩散）</strong>，好友数有上限</td></tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">整体架构</div>
+            <div class="sd-code">【发圈链路】
+用户发圈
+  → 写 Post 存储（post_id, uid, content, media, visible_rule, ts）
+  → 投 Kafka（topic: moment_publish）
+  → Fanout Service 消费：
+      拉取发布者好友列表（最多 5000 人）
+      过滤可见性（黑白名单分组）
+      批量 ZADD feed:{friend_uid} score=ts post_id
+      （Redis Pipeline 批量写，减少 RTT）
+  → 发布者自己的 feed 也写入（score 最高，置顶）
+
+【读圈链路（关键路径，必须 &lt;100ms）】
+  Step 1: ZREVRANGE feed:{uid} cursor 19（游标分页，取 20 条 post_id）
+  Step 2: 批量 mget post:{post_id}（帖子详情，Redis 缓存）
+  Step 3: 批量获取互动数据（点赞数、评论数）
+  Step 4: 过滤互动可见性（只保留共同好友的互动）← 最重计算
+  Step 5: 组装返回
+
+【互动链路】
+  点赞/评论 → 写 DB → 更新 Redis 互动缓存
+  → 通知发布者（APNs/长连接推送）</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">高性能关键设计</div>
+
+            <p style="font-weight:600;margin-bottom:6px;font-size:13.5px">① Feed 列表：Redis ZSET 写扩散</p>
+            <div class="sd-code">key:   feed:{uid}
+score: 发圈时间戳（毫秒）
+value: post_id
+
+• 好友上限 5000，写扩散最多 5000 次 ZADD，代价可控
+• Pipeline 批量写：一次 RTT 完成所有好友写入
+• 每个 feed 只保留最近 1000 条（ZREMRANGEBYRANK 裁剪）
+• TTL 7 天（用户长期不活跃后过期，登录时异步重建）</div>
+
+            <p style="font-weight:600;margin:12px 0 6px;font-size:13.5px">② 帖子详情：多级缓存</p>
+            <div class="sd-code">L1: 进程内 LRU 缓存（热点帖子，命中率 ~80%，无网络开销）
+L2: Redis Hash（post:{post_id}，TTL 24h）
+L3: MySQL（按 uid % 1024 分片，post_id Snowflake 含时间戳）
+
+批量读：mget post:1 post:2 ... post:20（一次 RTT）
+缓存穿透：布隆过滤器拦截不存在的 post_id</div>
+
+            <p style="font-weight:600;margin:12px 0 6px;font-size:13.5px">③ 互动数据：共同好友过滤（最难点）</p>
+            <div class="sd-code">问题：A 看 B 的朋友圈，点赞列表里只能看到 A 和 B 的共同好友的点赞
+
+存储：
+  likes:{post_id} → Redis Set（存所有点赞 uid）
+  comments:{post_id} → 按 post_id 分片的 DB 表
+
+过滤算法：
+  方案 1（精确）：
+    viewer_friends = Redis Set friends:{viewer_uid}  （好友集合）
+    post_likers   = Redis Set likes:{post_id}
+    visible       = SINTER viewer_friends post_likers  ← O(min(N,M))
+    问题：viewer 好友 5000 人，热帖点赞 10 万人，SINTER 代价可接受
+
+  方案 2（预计算，高性能）：
+    发布帖子时，为每个好友预生成"可见互动列表"缓存
+    代价：写放大，适合互动量可控的场景
+
+  方案 3（近似，超大热帖）：
+    只取最新 N 条点赞（如 200 人），在这 200 人里过滤共同好友
+    允许展示不完整，但性能极好
+    微信实际采用：展示最多显示 N 个好友的互动，截断后不再加载</div>
+
+            <p style="font-weight:600;margin:12px 0 6px;font-size:13.5px">④ 可见性控制：发圈时过滤，不在读时过滤</p>
+            <div class="sd-code">可见规则（发圈时设置）：
+  ALL          → 全部好友可见（默认）
+  WHITELIST    → 仅指定分组可见
+  BLACKLIST    → 对指定分组隐藏
+
+处理时机：Fanout 阶段过滤（写时过滤 vs 读时过滤）
+  写时过滤（推荐）：Fanout 时只向可见好友的 feed 中写入 post_id
+    优点：读时无需鉴权，延迟极低
+    缺点：分组变更后已写入的 feed 不会更新（接受最终一致）
+
+  读时过滤：读 feed 时每条都查可见性规则
+    优点：分组变更立即生效
+    缺点：每次读都要鉴权，延迟高，不适合大规模
+
+  微信实际做法：写时过滤 + 分组变更后新帖重新过滤，历史帖接受不一致</div>
+
+            <p style="font-weight:600;margin:12px 0 6px;font-size:13.5px">⑤ 好友关系：Redis Set + 本地缓存</p>
+            <div class="sd-code">存储：
+  friends:{uid} → Redis Set（存好友 uid 列表）
+  DB：friend 表（uid, friend_uid, created_at），双向存储
+
+读取：
+  Fanout 时从 Redis 读（O(1) SMEMBERS，最多 5000 个 uid）
+  共同好友过滤时 SINTER（两个 Set 取交集）
+
+本地缓存：
+  活跃用户的好友列表缓存在服务进程内（LRU，TTL 5min）
+  大幅减少 Redis 读压力</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">存储规划</div>
+            <table class="sd-table">
+              <tr><th>数据</th><th>存储</th><th>说明</th></tr>
+              <tr><td>帖子内容</td><td>MySQL（uid % 1024 分片）</td><td>post_id Snowflake，含时间戳支持范围查询</td></tr>
+              <tr><td>媒体资源</td><td>对象存储 + CDN</td><td>图片压缩多档（缩略/原图），CDN 边缘节点分发</td></tr>
+              <tr><td>Feed 列表</td><td>Redis ZSET feed:{uid}</td><td>只存 post_id，最近 1000 条，TTL 7 天</td></tr>
+              <tr><td>帖子详情缓存</td><td>Redis Hash post:{post_id}</td><td>TTL 24h，进程内 L1 缓存热点</td></tr>
+              <tr><td>好友关系</td><td>Redis Set friends:{uid} + MySQL</td><td>双向存储，互为好友各存一条</td></tr>
+              <tr><td>点赞列表</td><td>Redis Set likes:{post_id}</td><td>热帖截断（只存最新 200 个），冷数据落 DB</td></tr>
+              <tr><td>评论</td><td>MySQL（按 post_id % 256 分片）</td><td>评论数 Redis 计数，内容 DB 存储</td></tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">性能优化汇总</div>
+            <ul>
+              <li><strong>异步 Fanout</strong>：发圈请求立即返回，Fanout 异步进行（Kafka 消费者），发圈延迟 &lt;10ms</li>
+              <li><strong>Pipeline 批量写</strong>：Fanout 时 Redis Pipeline 一次写多个 ZADD，减少网络 RTT</li>
+              <li><strong>进程内 LRU 缓存</strong>：热点帖子详情 + 活跃用户好友列表，命中 80%+ 请求不走 Redis</li>
+              <li><strong>读时批量 mget</strong>：一次拉取 20 条帖子详情，单次 RTT</li>
+              <li><strong>互动截断</strong>：点赞/评论只精确展示前 N 个共同好友，超出截断，避免大集合 SINTER</li>
+              <li><strong>冷热分离</strong>：7 天以上的老帖 feed 过期，登录时只重建最近 1000 条（异步，不阻塞首屏）</li>
+              <li><strong>图片多档 CDN</strong>：上传时生成 thumbnail/middle/origin 三档，Feed 流展示 thumbnail，减少流量</li>
+            </ul>
+          </div>
+
+          <div class="sd-answer">关键设计三点：① 纯推模式（写扩散）——好友上限 5000 可控，Pipeline 批量 ZADD；② 共同好友互动过滤——Redis SINTER 两个 Set 取交集，热帖截断前 N 个；③ 可见性在写时（Fanout 阶段）过滤，读时不鉴权保证低延迟。进程内 L1 缓存是降低 P99 延迟的最有效手段。</div>
         </div>
       </div>
 
