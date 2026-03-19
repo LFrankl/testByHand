@@ -379,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题 · 59 智力题 · 13 系统设计</span>
+  <span class="badge">9 题 · 59 智力题 · 14 系统设计</span>
 </header>
 
 <div class="layout">
@@ -3976,6 +3976,189 @@ end</div>
           </div>
 
           <div class="sd-answer">核心答案：令牌桶（允许突发）+ Redis Lua 脚本（原子执行保证精度）+ 两层架构（本地令牌桶拦截 95% + Redis 全局兜底）+ Pipeline 多维度并行检查。Redis 故障时 Fail Open 保可用性，本地限流降级兜底。动态阈值通过配置中心热推送，无需重启服务。</div>
+        </div>
+      </div>
+
+      <!-- SD14 在线协同编辑 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">14</span>
+          <span class="sd-title">设计在线协同编辑系统</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个类 Google Docs 的在线协同编辑系统。多人同时编辑同一文档，编辑实时同步，冲突自动合并，支持离线编辑后重新上线同步，历史版本可查看/回滚。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">核心难题：并发冲突</div>
+            <div class="sd-code">场景：文档内容为 "ABC"
+  用户 A（在北京）：在位置 1 插入 "X"  → 期望结果 "AXBC"
+  用户 B（在上海）：在位置 1 删除 "B"  → 期望结果 "AC"
+
+两个操作几乎同时到达服务端，如何让双方最终看到相同且合理的结果？
+
+朴素方案（加锁）：
+  同一时刻只允许一人编辑 → 用户体验极差，协同意义丧失
+
+正确方案：冲突自动合并
+  两种主流算法：OT（Operational Transformation）和 CRDT</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">算法一：OT（操作变换）</div>
+            <div class="sd-code">【核心思想】
+  操作不是直接应用，而是先经过变换（Transform），修正因并发操作
+  导致的位置偏移，再应用到文档上。
+
+【操作表示】
+  Insert(pos, char)  — 在位置 pos 插入字符 char
+  Delete(pos)        — 删除位置 pos 的字符
+
+【变换规则（Transform 函数）】
+  transform(op_a, op_b) → op_a'
+  "在 op_b 已被应用的前提下，如何修正 op_a 使其仍表达原意"
+
+  Insert vs Insert：
+    若 op_b.pos ≤ op_a.pos → op_a'.pos = op_a.pos + 1（op_b 在前，op_a 位置右移）
+    否则               → op_a'.pos 不变
+
+  Insert vs Delete：
+    若 op_b.pos < op_a.pos  → op_a'.pos = op_a.pos - 1（op_b 删除在前，左移）
+    若 op_b.pos = op_a.pos  → 约定：Insert 优先，op_a'.pos 不变
+    否则               → op_a'.pos 不变
+
+  Delete vs Delete：
+    若 op_b.pos < op_a.pos  → op_a'.pos = op_a.pos - 1
+    若 op_b.pos = op_a.pos  → op_a' 变为 noop（同一字符已被 op_b 删除）
+
+【示例】文档 "ABC"
+  A：Insert(1, 'X')  —— 生成时文档版本 v0
+  B：Delete(1)       —— 生成时文档版本 v0（B 删除的是 'B'，index=1）
+
+  服务端先收到 A 的操作，应用后文档变为 "AXBC"（v1）
+  B 的 Delete(1) 需要变换：
+    transform(Delete(1), Insert(1,'X'))
+    Insert 在 pos=1，Delete 的 pos=1 ≥ Insert 的 pos → pos 右移 → Delete(2)
+  应用变换后的 Delete(2) → "AXC" （v2）
+
+  A 同步服务端变更后也看到 "AXC" ✅ 两端一致</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">算法二：CRDT（无冲突复制数据类型）</div>
+            <div class="sd-code">【核心思想】
+  给每个字符分配全局唯一且不变的 ID（包含 lamport 时间戳 + 节点 ID），
+  字符之间的顺序由 ID 决定，而非绝对位置。
+  删除用墓碑标记（逻辑删除），不移动其他字符。
+
+【数据结构（以 RGA / Logoot 为例）】
+  文档 = 有序字符链表，每个节点：
+    id:       {lamport_ts, site_id}    唯一 ID，全序可比较
+    char:     字符值
+    deleted:  bool（墓碑标记）
+    prev_id:  前驱节点 ID（插入时指定）
+
+【操作】
+  Insert: {type:"ins", id:{ts,site}, prev_id, char}
+    → 找到 prev_id 对应节点，在其后插入（同位置并发插入按 id 排序决定顺序）
+
+  Delete: {type:"del", target_id}
+    → 找到 target_id 节点，设 deleted=true（墓碑，不真正删除）
+    → 显示时跳过 deleted 节点
+
+【关键性质】
+  • 交换律：op_A ∘ op_B = op_B ∘ op_A（操作顺序无关）
+  • 幂等性：重复应用同一操作结果不变
+  → 无需服务端协调变换，天然支持离线编辑 + P2P 同步
+
+【缺点】
+  • 墓碑永久存在，长期编辑后内存膨胀（需定期 GC）
+  • 实现复杂度高于 OT</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">OT vs CRDT 选型</div>
+            <table class="sd-table">
+              <tr><th>维度</th><th>OT</th><th>CRDT</th></tr>
+              <tr><td>冲突解决</td><td>服务端集中 Transform</td><td>分布式，本地直接应用</td></tr>
+              <tr><td>服务端依赖</td><td>需要中心服务端排序</td><td>✅ 可 P2P，无需中心协调</td></tr>
+              <tr><td>离线支持</td><td>需重新 Transform</td><td>✅ 天然支持，操作可交换</td></tr>
+              <tr><td>内存占用</td><td>低（绝对位置）</td><td>高（唯一 ID + 墓碑）</td></tr>
+              <tr><td>实现复杂度</td><td>中（Transform 规则复杂）</td><td>高（ID 全序、GC）</td></tr>
+              <tr><td>工程成熟度</td><td>✅ Google Docs / Etherpad</td><td>✅ Figma / Notion / 新一代</td></tr>
+              <tr><td>适用场景</td><td>中心化文档编辑</td><td>离线优先、多端、P2P</td></tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">系统架构（以 OT 为例）</div>
+            <div class="sd-code">【客户端】
+  本地文档副本 + 操作队列
+  编辑 → 生成 op（含 doc_version） → 立即本地应用（乐观更新）
+       → 通过 WebSocket 发送到服务端
+
+  收到服务端 op：
+    若 op.version = local_version → 直接应用
+    若 op.version < local_version → Transform(server_op, local_pending_ops) → 应用
+
+【服务端（单文档单 goroutine/Actor 序列化）】
+  每个文档由一个 goroutine 负责（无锁，顺序处理）：
+
+  收到 op：
+    1. 检查 op.base_version：
+       = current_version → 直接应用，广播给其他客户端
+       < current_version → 用 history ops 逐步 Transform → 应用 → 广播
+    2. op 写入操作日志（MySQL / append-only log）
+    3. 定期生成文档快照（全量内容）
+
+【存储】
+  ops_log 表：doc_id, version, op_json, user_id, ts  （操作日志）
+  snapshots 表：doc_id, version, content_json, ts    （定期快照）
+  文档读取：找最近快照 + 回放快照之后的 ops_log
+
+【WebSocket 连接管理】
+  连接层（无状态）：负载均衡 → 多个 WS 服务器
+  文档层（有状态）：同一文档的所有连接路由到同一个 Document Actor
+    → 用一致性哈希：doc_id → WS 服务器节点
+    → 或 Redis Pub/Sub 广播：WS 收到 op → publish doc:{doc_id} → 所有节点消费推送</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">历史版本与回滚</div>
+            <div class="sd-code">【存储策略：快照 + 操作日志（类 LSM）】
+  每 N 次操作（或定时）生成一次完整内容快照
+  ops_log 保存每一次操作
+
+  查看历史版本 v_k：
+    找最近且 ≤ v_k 的快照 snapshot(v_j)
+    回放 ops_log[v_j+1 ... v_k]
+    时间复杂度：O(N) N=快照间隔操作数
+
+  回滚到 v_k：
+    生成反向操作序列（undo log）：
+      reverse(Insert(pos,c)) = Delete(pos)
+      reverse(Delete(pos,c)) = Insert(pos,c)
+    依次应用 reverse(op[v_current]), ..., reverse(op[v_k+1])
+    形成新版本 v_current+1（不覆盖历史，而是追加）
+
+  协同回滚（多人在线时）：
+    回滚操作本身也是一个 op，走 OT 流程广播给所有客户端</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">光标同步与用户感知</div>
+            <ul>
+              <li><strong>光标位置同步</strong>：每个操作附带光标位置，其他客户端收到后更新对应用户的光标显示（不同颜色）</li>
+              <li><strong>光标位置变换</strong>：收到他人插入/删除操作后，本地光标位置同样需要 Transform 修正（与 OT 操作变换逻辑一致）</li>
+              <li><strong>用户在线状态</strong>：WebSocket 心跳检测在线用户，文档头部展示协作者头像</li>
+              <li><strong>操作合并（防抖）</strong>：连续输入同一位置的字符合并为一个 op（如连续输入 "hello" 合并为 Insert(pos, "hello")），减少网络和存储压力</li>
+            </ul>
+          </div>
+
+          <div class="sd-answer">核心答案：OT（操作变换）或 CRDT 解决并发冲突，是协同编辑的本质。OT 需服务端集中排序 Transform，适合中心化架构（Google Docs）；CRDT 操作可交换天然支持离线，适合离线优先场景（Notion/Figma）。工程实现：每文档一个 Actor/goroutine 序列化操作，快照+ops_log 存储历史，WebSocket 实时广播，客户端乐观更新+冲突修正。</div>
         </div>
       </div>
 
