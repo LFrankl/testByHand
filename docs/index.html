@@ -379,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题 · 59 智力题 · 9 系统设计</span>
+  <span class="badge">9 题 · 59 智力题 · 10 系统设计</span>
 </header>
 
 <div class="layout">
@@ -3161,6 +3161,201 @@ TOP N 查询：
           </div>
 
           <div class="sd-answer">核心答案：Redis ZSET 是实时排行榜标准解。同分排序用 score 编码时间戳补数（高位分数+低位补时间）；分页用游标而非 offset；千万级榜单分片 ZSET 归并；热搜词频用 Count-Min Sketch 近似统计降低内存。ZINCRBY 保证原子更新，Binlog+Canal 解耦 DB 与 Redis 一致性。</div>
+        </div>
+      </div>
+
+      <!-- SD10 订单超时 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">10</span>
+          <span class="sd-title">订单超时自动取消的多方案设计</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>电商下单后若 30 分钟内未支付，自动取消订单并释放库存。设计并比较多种超时处理方案，说明各自适用场景与优缺点，给出生产推荐选型。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">方案全景对比</div>
+            <table class="sd-table">
+              <tr><th>方案</th><th>原理</th><th>精度</th><th>性能</th><th>可靠性</th><th>复杂度</th></tr>
+              <tr>
+                <td><strong>① 定时轮询（Cron）</strong></td>
+                <td>定时任务扫描 DB 中 status=待支付 且 create_time &lt; now-30min 的订单，批量取消</td>
+                <td>❌ 低（轮询间隔级）</td>
+                <td>❌ 全表扫描压 DB</td>
+                <td>✅ 简单可靠</td>
+                <td>⭐ 极低</td>
+              </tr>
+              <tr>
+                <td><strong>② JVM 延迟队列（DelayQueue）</strong></td>
+                <td>订单入 Java DelayQueue，到期弹出处理</td>
+                <td>✅ 毫秒级</td>
+                <td>✅ 内存操作</td>
+                <td>❌ 进程重启丢失</td>
+                <td>⭐⭐ 低</td>
+              </tr>
+              <tr>
+                <td><strong>③ Redis Key 过期监听</strong></td>
+                <td>SET order:{id} "" EX 1800；订阅 keyspace 过期事件触发回调</td>
+                <td>✅ 秒级</td>
+                <td>✅ Redis 原生</td>
+                <td>❌ 过期事件不保证投递；集群下事件不跨节点广播</td>
+                <td>⭐⭐ 低</td>
+              </tr>
+              <tr>
+                <td><strong>④ Redis ZSET 延迟队列</strong></td>
+                <td>ZADD delay_queue score=到期时间戳 member=order_id；消费者 ZRANGEBYSCORE 轮询取到期任务</td>
+                <td>✅ 秒级</td>
+                <td>✅ 高</td>
+                <td>✅ 持久化可选；多消费者竞争需加锁</td>
+                <td>⭐⭐⭐ 中</td>
+              </tr>
+              <tr>
+                <td><strong>⑤ MQ 延迟消息</strong></td>
+                <td>下单时投一条 delay=30min 的延迟消息（RocketMQ/RabbitMQ TTL+DLX）；到期投递到消费者</td>
+                <td>✅ 秒级</td>
+                <td>✅ 高</td>
+                <td>✅ MQ 持久化，消费失败可重试</td>
+                <td>⭐⭐⭐ 中</td>
+              </tr>
+              <tr>
+                <td><strong>⑥ 时间轮（HashedWheelTimer）</strong></td>
+                <td>Netty 时间轮：环形数组 + 链表，O(1) 插入/到期，适合海量定时任务</td>
+                <td>✅ 毫秒级</td>
+                <td>✅ 极高</td>
+                <td>❌ 内存态，需持久化配合</td>
+                <td>⭐⭐⭐⭐ 较高</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">方案一：定时轮询（Cron）详解</div>
+            <div class="sd-code">SELECT id FROM orders
+WHERE status = 'PENDING' AND create_time < NOW() - INTERVAL 30 MINUTE
+LIMIT 1000;
+
+问题：
+  • 轮询间隔（如1min）= 超时误差上限
+  • 数据量大时全表扫描，create_time + status 联合索引必须建
+  • 分布式场景多节点同时跑需加分布式锁（或分片：node_id % shard_count）
+
+适用：订单量小（日均 &lt;10万），对精度要求不高，团队技术栈简单</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">方案三：Redis Key 过期监听——陷阱分析</div>
+            <ul>
+              <li><strong>不保证投递</strong>：Redis 过期是惰性 + 定期删除，Key 过期后不一定立即触发事件，可能延迟数秒</li>
+              <li><strong>事件丢失</strong>：notify-keyspace-events 默认关闭；消费者重启期间发生的过期事件永久丢失</li>
+              <li><strong>集群问题</strong>：Key 只在所在节点触发事件，监听者需订阅所有节点</li>
+              <li><strong>结论</strong>：⚠️ 不推荐用于生产核心流程，适合对丢失不敏感的通知场景</li>
+            </ul>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">方案四：Redis ZSET 延迟队列详解</div>
+            <div class="sd-code">【下单时】
+ZADD delay_queue {expire_ts} {order_id}
+
+【消费者（轮询，间隔1s）】
+Lua 脚本（原子获取并移除到期任务）：
+  local now = ARGV[1]
+  local tasks = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', now, 'LIMIT', 0, 10)
+  if #tasks == 0 then return {} end
+  redis.call('ZREM', KEYS[1], unpack(tasks))
+  return tasks
+
+获取到 order_id 后：
+  → 查 DB 校验订单状态（防止已支付的误取消）
+  → 状态仍为 PENDING → 执行取消逻辑（更新 DB + 释放库存）
+  → 幂等处理：用 order_id 做去重 key，防止多消费者重复处理
+
+问题：
+  • Redis 宕机丢失（需 AOF/RDB 持久化）
+  • 多消费者竞争：Lua 脚本保证原子 ZRANGEBYSCORE + ZREM，但消费者宕机后
+    任务已移除，需二阶段确认（移除前先 ZADD 到 processing 集合）</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">方案五：MQ 延迟消息（推荐）</div>
+            <div class="sd-code">【RocketMQ 延迟消息】
+// 下单时发送延迟消息（18个延迟级别，level 16 = 30min）
+Message msg = new Message("order_timeout_topic", order.getId().getBytes());
+msg.setDelayTimeLevel(16);  // 30min
+producer.send(msg);
+
+// 消费者
+consumer.subscribe("order_timeout_topic", "*");
+consumer.registerMessageListener((msgs, context) -> {
+    for (MessageExt msg : msgs) {
+        String orderId = new String(msg.getBody());
+        // 幂等查询订单状态
+        Order order = orderService.getById(orderId);
+        if (order.getStatus() == PENDING) {
+            orderService.cancel(orderId);  // CAS 更新状态
+        }
+    }
+    return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+});
+
+【RabbitMQ TTL + 死信队列（DLX）】
+正常队列：x-message-ttl=1800000, x-dead-letter-exchange=dlx_exchange
+到期后消息路由到 DLX → 死信队列 → 消费者处理超时
+
+优点：
+  • MQ 自带持久化，消费失败自动重试
+  • 业务解耦，超时处理逻辑独立
+  • 天然支持分布式多消费者，无需额外加锁
+
+注意：
+  • RocketMQ 延迟级别固定（开源版），精确控制需商业版或自研
+  • 消息幂等：消费者必须做幂等（CAS 更新订单状态）防止重复消费取消已支付订单</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">方案六：时间轮原理</div>
+            <div class="sd-code">时间轮结构（Netty HashedWheelTimer）：
+  • 环形数组，长度 = ticksPerWheel（默认512槽）
+  • 每隔 tickDuration（默认100ms）指针前进一格
+  • 任务挂在 slot = (当前格 + delay/tickDuration) % wheelSize 对应的链表
+  • 到期检查：指针到达该 slot，遍历链表执行 round==0 的任务，round>0 的减1
+
+插入：O(1)（找到 slot 挂链表）
+到期处理：O(任务数/槽数)（均摊 O(1)）
+vs. 最小堆（DelayQueue）：插入 O(log N)，时间轮在海量任务下更优
+
+局限：
+  • 精度受 tickDuration 限制（默认100ms误差）
+  • 内存态，需配合持久化（DB/Redis 记录任务，重启后回填时间轮）</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">生产选型推荐</div>
+            <table class="sd-table">
+              <tr><th>场景</th><th>推荐方案</th><th>理由</th></tr>
+              <tr><td>小型系统，订单量 &lt;10万/天</td><td>① Cron 轮询</td><td>实现最简单，误差可接受</td></tr>
+              <tr><td>中型系统，已有 Redis，无 MQ</td><td>④ ZSET 延迟队列</td><td>无需引入新组件，精度秒级</td></tr>
+              <tr><td>中大型系统，已有 RocketMQ</td><td>⑤ MQ 延迟消息 ✅ 首选</td><td>可靠投递 + 自动重试 + 解耦，生产最成熟</td></tr>
+              <tr><td>超高并发，百万级在途订单</td><td>⑥ 时间轮 + ④ ZSET 持久化</td><td>内存时间轮处理，ZSET 做持久化备份防丢</td></tr>
+              <tr><td>任何方案兜底</td><td>① Cron 兜底扫描</td><td>主流程失效时兜底，扫描间隔可设5分钟</td></tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">通用设计原则</div>
+            <ul>
+              <li><strong>幂等</strong>：取消逻辑必须幂等（CAS：UPDATE orders SET status='CANCELLED' WHERE id=? AND status='PENDING'），防止重复执行</li>
+              <li><strong>事务</strong>：取消订单 + 释放库存需在同一事务，或用最终一致性（取消成功后发消息释放库存）</li>
+              <li><strong>兜底</strong>：主方案 + Cron 兜底扫描，双重保障。Cron 误差大但绝对可靠</li>
+              <li><strong>可观测</strong>：超时取消任务需记录日志、监控延迟、告警积压</li>
+            </ul>
+          </div>
+
+          <div class="sd-answer">最优方案：MQ 延迟消息（RocketMQ）+ Cron 兜底。MQ 提供可靠投递、自动重试、天然分布式；Cron 作为兜底处理漏网订单。Redis ZSET 延迟队列是无 MQ 时的次优选。无论哪种方案，消费者幂等（CAS 更新状态）和 Cron 兜底扫描是必须的。</div>
         </div>
       </div>
 
