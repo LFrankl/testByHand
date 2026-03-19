@@ -590,3 +590,33 @@ COMMIT;
 **存储**：快照（每 N 次操作）+ ops_log（每次操作）。历史版本 = 找最近快照 + 回放 ops_log；回滚 = 追加反向操作序列（undo log），不覆盖历史。
 
 **答案**：OT/CRDT 是协同编辑的核心算法。OT 中心化排序简单可靠（Google Docs 方案），CRDT 离线优先更灵活（新一代方案）。工程实现：Actor 模型序列化 + 快照+ops_log + WebSocket + 客户端乐观更新。
+
+---
+
+## 15. 设计电商购物车与订单系统
+
+**题目**
+
+设计一个电商购物车 + 订单系统。购物车支持多端同步、商品失效处理；订单支持下单、支付、发货、售后全链路；要求库存不超卖、支付幂等、订单状态机可靠流转，日订单量千万级。
+
+**设计要点**
+
+**购物车**：Redis Hash `cart:{uid}`（field=sku_id, value=quantity+snapshot），O(1) 读写，TTL 30 天。登录时游客车与账号车合并（相同 SKU 取较大数量）。结算时重新查实时价格，不信任 snapshot。
+
+**订单状态机**：PENDING_PAY → PAID → SHIPPED → COMPLETED，每次变更用 CAS（`WHERE status=old_status`）保证幂等，非法跳转直接拒绝，变更后发 Kafka 领域事件驱动下游。
+
+**库存两阶段扣减（防超卖核心）**：
+- 预扣：下单时 Redis Lua 原子执行 `available -= qty, locked += qty`，失败则"库存不足"
+- 确认：支付成功后 `locked -= qty`（物流出库后减 physical）
+- 释放：超时取消时 `available += qty, locked -= qty`
+- DB 乐观锁兜底：`WHERE available >= qty`，影响行 0 则不足
+
+**支付幂等**：pay_no Snowflake 唯一索引，`INSERT IGNORE` 防并发重复。回调验签 + CAS 更新状态，成功后发 Kafka 驱动订单状态变更。T+1 与支付宝/微信账单对账。
+
+**下单链路**：校验商品 → Lua 预扣库存 → 同事务创建 order + payment → 投延迟消息（超时取消）→ 返回支付参数。支付回调驱动后续异步流程。
+
+**存储**：购物车 Redis Hash + 订单 MySQL 分片（user_id % 1024）+ 支付独立库 + 库存 Redis（热）+ MySQL（冷）+ ES（多维搜索）。
+
+**高并发优化**：热点 SKU 库存分桶（1000件拆10桶，消除单 key 竞争）、订单按 user_id 分片、读写分离、下单核心同步其余异步。
+
+**答案**：Redis Hash 购物车 + 两阶段库存预扣（Lua 原子）+ pay_no 幂等 + CAS 状态机 + 领域事件驱动。热点库存分桶是大促必考点，支付回调幂等是支付系统必考点。

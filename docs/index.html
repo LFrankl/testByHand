@@ -379,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题 · 59 智力题 · 14 系统设计</span>
+  <span class="badge">9 题 · 59 智力题 · 15 系统设计</span>
 </header>
 
 <div class="layout">
@@ -4159,6 +4159,178 @@ end</div>
           </div>
 
           <div class="sd-answer">核心答案：OT（操作变换）或 CRDT 解决并发冲突，是协同编辑的本质。OT 需服务端集中排序 Transform，适合中心化架构（Google Docs）；CRDT 操作可交换天然支持离线，适合离线优先场景（Notion/Figma）。工程实现：每文档一个 Actor/goroutine 序列化操作，快照+ops_log 存储历史，WebSocket 实时广播，客户端乐观更新+冲突修正。</div>
+        </div>
+      </div>
+
+      <!-- SD15 购物车与订单系统 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">15</span>
+          <span class="sd-title">设计电商购物车与订单系统</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个电商购物车 + 订单系统。购物车支持多端同步、商品失效处理；订单支持下单、支付、发货、售后全链路；要求库存不超卖、支付幂等、订单状态机可靠流转，日订单量千万级。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">购物车设计</div>
+            <div class="sd-code">【数据模型】
+  cart:{uid}  →  Redis Hash
+    field: sku_id
+    value: {quantity, added_at, snapshot{price, title, img}}
+
+选型对比：
+  Cookie/本地存储  → 不登录可用，但多端不同步，服务端无感知
+  DB 存储         → 持久可靠，但每次加购走 DB，高并发下压力大
+  Redis Hash      → ✅ 推荐：读写 O(1)，TTL 控制过期，登录后合并游客车
+
+【登录合并】
+  游客购物车（cookie_id）登录后 → 与账号购物车合并
+  合并策略：相同 SKU 取较大数量；账号已有则保留账号数据
+
+【商品有效性校验（展示时实时校验）】
+  HMGET cart:{uid} sku_1 sku_2 ...  → 批量取出
+  批量查商品服务：价格/库存/上下架状态
+  已下架 → 标红提示"商品已失效"，不参与结算
+  价格变动 → 展示最新价，snapshot 仅供参考（不作为结算依据）
+
+【购物车结算】
+  结算时重新查商品服务获取实时价格（不信任 snapshot）
+  预扣库存（软锁定）→ 跳转支付页 → 支付成功确认扣减</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">订单状态机</div>
+            <div class="sd-code">状态流转：
+  PENDING_PAY（待支付）
+    → 支付成功    → PAID（已支付）
+    → 超时/取消   → CANCELLED（已取消）
+
+  PAID（已支付）
+    → 商家发货    → SHIPPED（已发货）
+    → 申请退款    → REFUNDING（退款中）
+
+  SHIPPED（已发货）
+    → 用户确认/自动 → COMPLETED（已完成）
+    → 申请售后    → AFTER_SALE（售后中）
+
+  REFUNDING → 退款成功 → REFUNDED（已退款）
+  AFTER_SALE → 处理完成 → COMPLETED / REFUNDED
+
+状态变更规则：
+  1. 只允许合法跳转（用枚举 Map 定义合法转换，非法跳转直接拒绝）
+  2. 状态变更必须幂等：UPDATE orders SET status=? WHERE id=? AND status=?（CAS）
+  3. 状态变更后发领域事件（Kafka），驱动下游（库存/物流/通知）</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">库存扣减：不超卖核心</div>
+            <div class="sd-code">【库存分层】
+  可售库存（available）：用户可购买数量
+  锁定库存（locked）：已下单未支付（预扣）
+  实际库存（physical）：仓库实物，available + locked ≤ physical
+
+【下单流程（预扣 + 确认两阶段）】
+  Phase 1：下单预扣（创建订单时）
+    Lua 脚本（原子）：
+      if available[sku] >= quantity then
+          available[sku] -= quantity
+          locked[sku]    += quantity
+          return OK
+      else return INSUFFICIENT
+
+    成功 → 创建订单（status=PENDING_PAY）
+    失败 → 返回"库存不足"
+
+  Phase 2：支付确认（支付成功后）
+    locked[sku] -= quantity    ← 锁定转为实际扣减（物流出库后再减 physical）
+    order.status = PAID
+
+  Phase 3：超时取消（释放锁定）
+    available[sku] += quantity
+    locked[sku]    -= quantity
+    order.status = CANCELLED
+
+【DB 乐观锁兜底】
+  UPDATE sku_stock
+  SET available = available - ?, locked = locked + ?
+  WHERE sku_id = ? AND available >= ?
+  → 影响行数 = 0 则库存不足（兜底防止 Redis 数据不一致）</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">支付幂等与对账</div>
+            <div class="sd-code">【支付幂等（防重复扣款）】
+  下单时生成全局唯一支付单号（pay_no = Snowflake ID）
+  提交支付时携带 pay_no，支付网关以 pay_no 为幂等键：
+    第一次：创建支付记录，发起扣款
+    重复请求：查到已有记录，直接返回上次结果
+
+  本地幂等表：
+    payment 表（pay_no 唯一索引）：INSERT IGNORE / ON DUPLICATE KEY 防并发重复插入
+
+【支付回调处理（异步通知）】
+  支付宝/微信回调 → 服务端：
+    1. 验签（RSA 签名校验）
+    2. 查 payment 表，status=PAID 则忽略（幂等）
+    3. 状态未更新 → CAS 更新：UPDATE payment SET status='PAID' WHERE pay_no=? AND status='PENDING'
+    4. 影响行 > 0 → 发 Kafka 事件（topic: payment_success）→ 订单服务消费更新订单状态
+    5. 返回 success（否则支付宝会重试）
+
+【对账（T+1 批量校验）】
+  每天凌晨从支付宝/微信拉取账单文件
+  与本地 payment 表逐笔比对：
+    本地有、对方无 → 可能重复扣款，人工核查
+    对方有、本地无 → 漏记，补录
+    金额不符       → 告警，人工处理</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">下单完整链路</div>
+            <div class="sd-code">用户点击"提交订单"
+  ① 购物车服务：校验商品有效性 + 查实时价格
+  ② 库存服务：Redis Lua 预扣库存（available -= qty，locked += qty）
+  ③ 订单服务：创建 order（status=PENDING_PAY）+ payment（status=PENDING）
+              同一 DB 事务 OR 本地消息表（保证 order + payment 原子创建）
+  ④ 超时任务：投 MQ 延迟消息（30min 后检查是否支付）
+  ⑤ 返回订单号 + 支付参数 → 跳转支付页
+
+用户完成支付
+  ⑥ 支付网关回调 → 验签 → CAS 更新 payment.status = PAID
+  ⑦ 发 Kafka（payment_success）→ 订单服务消费
+  ⑧ CAS 更新 order.status = PAID
+  ⑨ 发 Kafka（order_paid）→ 库存服务确认扣减，物流服务创建运单，通知服务发消息</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">存储设计</div>
+            <table class="sd-table">
+              <tr><th>数据</th><th>存储</th><th>说明</th></tr>
+              <tr><td>购物车</td><td>Redis Hash cart:{uid}</td><td>TTL 30天，登录合并游客车</td></tr>
+              <tr><td>订单主表</td><td>MySQL（按 user_id % 1024 分片）</td><td>order_id Snowflake，含时间戳支持范围查询</td></tr>
+              <tr><td>订单详情/商品行</td><td>MySQL（与主表同分片）</td><td>按 order_id 关联</td></tr>
+              <tr><td>支付记录</td><td>MySQL（独立库）</td><td>pay_no 唯一索引，金额数据独立隔离</td></tr>
+              <tr><td>库存（热）</td><td>Redis Hash sku_stock:{sku_id}</td><td>available/locked 字段，Lua 原子操作</td></tr>
+              <tr><td>库存（冷）</td><td>MySQL sku_stock</td><td>乐观锁兜底，T+1 与 Redis 对账</td></tr>
+              <tr><td>订单查询</td><td>Elasticsearch（异步同步）</td><td>支持多条件搜索（状态/时间/商品）</td></tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">高并发优化</div>
+            <ul>
+              <li><strong>读写分离</strong>：订单列表查询走从库；支付状态查询走主库（强一致）</li>
+              <li><strong>订单分库分表</strong>：按 user_id 分片保证同一用户订单在同一分片，避免跨库查询；商家维度查询走 ES</li>
+              <li><strong>热点 SKU 库存</strong>：超热商品（大促爆款）库存分桶——将 1000 件拆成 10 桶各 100 件，按请求哈希到不同桶，消除单 key 竞争</li>
+              <li><strong>异步化</strong>：下单核心流程同步（库存预扣 + 创建订单），其余全异步（物流/通知/积分）</li>
+              <li><strong>本地缓存商品信息</strong>：商品价格/标题等基础信息本地 LRU 缓存（TTL 5min），下单时 fallback 到 Redis/DB</li>
+            </ul>
+          </div>
+
+          <div class="sd-answer">核心设计：① 购物车用 Redis Hash，结算时重新查实时价格；② 库存两阶段扣减（预扣+确认），Lua 原子操作防超卖，DB 乐观锁兜底；③ 支付幂等靠 pay_no 唯一索引 + CAS，回调验签后发 Kafka 驱动状态流转；④ 订单状态机合法跳转 + CAS 变更 + 领域事件驱动下游。热点 SKU 库存分桶是大促场景的关键优化。</div>
         </div>
       </div>
 
