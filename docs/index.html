@@ -379,7 +379,7 @@
   <span class="logo">forinterview</span>
   <span class="sep">|</span>
   <span class="subtitle">Go 面试题练习 · 完整答案解析</span>
-  <span class="badge">9 题 · 59 智力题 · 15 系统设计</span>
+  <span class="badge">9 题 · 59 智力题 · 16 系统设计</span>
 </header>
 
 <div class="layout">
@@ -4331,6 +4331,218 @@ end</div>
           </div>
 
           <div class="sd-answer">核心设计：① 购物车用 Redis Hash，结算时重新查实时价格；② 库存两阶段扣减（预扣+确认），Lua 原子操作防超卖，DB 乐观锁兜底；③ 支付幂等靠 pay_no 唯一索引 + CAS，回调验签后发 Kafka 驱动状态流转；④ 订单状态机合法跳转 + CAS 变更 + 领域事件驱动下游。热点 SKU 库存分桶是大促场景的关键优化。</div>
+        </div>
+      </div>
+
+      <!-- SD16 微服务网关 -->
+      <div class="sd-card">
+        <div class="sd-card-header" onclick="toggleSD(this)">
+          <span class="sd-num">16</span>
+          <span class="sd-title">设计微服务网关</span>
+          <button class="sd-toggle">展开</button>
+        </div>
+        <div class="hint-block sd-body">
+          <div class="sd-section">
+            <div class="sd-section-label">题目</div>
+            <p>设计一个生产级微服务网关（类 Kong / APISIX / Spring Cloud Gateway）。承担所有外部流量入口，提供：路由转发、鉴权、限流、熔断、灰度发布、协议转换、可观测性。要求高性能（单机 10 万 QPS）、高可用、动态配置热更新。</p>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">网关核心职责</div>
+            <table class="sd-table">
+              <tr><th>职责</th><th>说明</th></tr>
+              <tr><td>路由转发</td><td>按 path/host/method/header 匹配规则，转发到对应上游服务</td></tr>
+              <tr><td>鉴权认证</td><td>JWT 验签 / OAuth2 / API Key，统一在网关层完成，后端服务免鉴权</td></tr>
+              <tr><td>限流</td><td>全局 QPS / 用户配额 / IP 黑白名单，防止后端过载</td></tr>
+              <tr><td>熔断降级</td><td>上游服务不可用时快速失败，返回兜底响应，防止雪崩</td></tr>
+              <tr><td>灰度发布</td><td>按请求特征（header/cookie/比例）将流量路由到新版本</td></tr>
+              <tr><td>协议转换</td><td>外部 HTTP/REST → 内部 gRPC；WebSocket 代理；SSE 转发</td></tr>
+              <tr><td>可观测性</td><td>请求日志、Trace 注入、Metrics 上报（Prometheus）</td></tr>
+              <tr><td>安全防护</td><td>CORS、HTTPS 终止、请求大小限制、SQL 注入检测</td></tr>
+            </table>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">整体架构</div>
+            <div class="sd-code">外部请求
+    │
+    ▼
+┌─────────────────────────────────────────────┐
+│               DNS / LB（四层）               │
+└──────────────────┬──────────────────────────┘
+                   │
+    ┌──────────────▼──────────────┐
+    │        网关集群（无状态）     │   ← 水平扩展，多实例
+    │                             │
+    │  Plugin Pipeline（责任链）   │
+    │  ┌─────────────────────┐   │
+    │  │ 1. 限流（本地+Redis）│   │
+    │  │ 2. 鉴权（JWT 验签）  │   │
+    │  │ 3. 路由匹配         │   │
+    │  │ 4. 灰度分流         │   │
+    │  │ 5. 协议转换         │   │
+    │  │ 6. 反向代理         │   │
+    │  │ 7. 熔断             │   │
+    │  │ 8. 日志/Trace       │   │
+    │  └─────────────────────┘   │
+    └──────────────┬──────────────┘
+                   │
+    ┌──────────────▼──────────────┐
+    │        上游微服务集群         │
+    │  svc-user  svc-order  ...   │
+    └─────────────────────────────┘
+
+控制面（Admin API）：
+    路由规则 / 限流配置 / 插件配置 → 存 etcd/Nacos
+    → 网关实例监听变更，热更新本地规则缓存（无需重启）</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">路由匹配：Trie + 优先级</div>
+            <div class="sd-code">路由规则示例：
+  {
+    "id": "route-1",
+    "priority": 100,
+    "match": {
+      "host": "api.example.com",
+      "path": "/api/order/*",
+      "method": ["GET","POST"],
+      "headers": {"X-Version": "v2"}
+    },
+    "upstream": "svc-order-v2",
+    "plugins": ["jwt-auth", "rate-limit", "circuit-breaker"]
+  }
+
+匹配算法：
+  Path 用前缀 Trie（基数树）：O(path长度) 匹配
+  Host 用 HashMap：O(1) 精确匹配，支持通配符 *.example.com
+  多条规则命中时按 priority 降序取第一条
+
+动态更新：
+  etcd watch → 触发回调 → 原子替换路由表指针（sync.RWMutex 或 atomic.Value）
+  热更新期间请求不中断，旧规则服务完正在处理的请求</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">鉴权：JWT 验签优化</div>
+            <div class="sd-code">【标准 JWT 验签流程】
+  1. 从 Authorization: Bearer {token} 提取 JWT
+  2. Base64 解码 Header + Payload
+  3. 用公钥验 RSA/ECDSA 签名（CPU 密集）
+  4. 检查 exp（过期时间）
+  5. 提取 uid/role 注入请求 Header，传给上游
+
+【性能优化：本地缓存 + 黑名单】
+  验签成功后缓存结果：
+    key = token 的 jti（JWT ID）或 hash(token)
+    value = {uid, role, exp}
+    TTL = min(token 剩余时间, 5min)
+  后续相同 token 直接读缓存，跳过 CPU 密集的 RSA 运算
+
+  踢人下线：将 jti 写入 Redis 黑名单（TTL = token 剩余时间）
+    每次验证时查黑名单，命中则 401
+
+【JWKS 热更新（公钥轮换）】
+  从 Auth Server 定期拉取 JWKS（JSON Web Key Set）
+  kid（Key ID）匹配：JWT Header 中的 kid 对应使用哪把公钥
+  新旧公钥过渡期同时支持，无感轮换</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">熔断器：状态机实现</div>
+            <div class="sd-code">熔断器三态：
+  CLOSED（正常）→ 失败率超阈值 → OPEN（熔断）
+  OPEN → 超过 reset_timeout → HALF_OPEN（探测）
+  HALF_OPEN → 探测请求成功 → CLOSED
+  HALF_OPEN → 探测请求失败 → OPEN（重置计时）
+
+参数配置（每个上游独立）：
+  failure_threshold:   失败率阈值（如 50%）
+  min_requests:        最小请求数（避免低流量误触发，如 10）
+  window_seconds:      统计窗口（如 10s）
+  reset_timeout:       OPEN 后多久进入 HALF_OPEN（如 30s）
+  half_open_requests:  HALF_OPEN 阶段放行请求数（如 3）
+
+统计窗口：滑动时间窗口（环形数组，每秒一个桶，保留最近 10 个桶）
+  成功/失败计数 → 失败率 = sum(failure) / sum(total)
+
+OPEN 状态响应：
+  直接返回兜底（不转发上游）：
+    static fallback（预设 JSON）
+    cached response（上次成功的缓存结果）
+    降级服务（另一个轻量级上游）</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">灰度发布</div>
+            <div class="sd-code">【灰度策略（可叠加）】
+  1. Header 匹配：X-Gray: true → 路由到 canary 上游
+  2. Cookie 匹配：gray_uid in cookie → canary
+  3. 比例分流：hash(uid) % 100 < 10 → 10% 流量到 canary
+  4. IP 白名单：内部测试 IP → canary
+
+【配置示例】
+  {
+    "upstream": "svc-order-v1",       ← stable
+    "canary": {
+      "upstream": "svc-order-v2",
+      "weight": 10,                   ← 10% 流量
+      "match": {"header": {"X-Gray":"1"}}
+    }
+  }
+
+【发布流程】
+  1. 部署 v2 实例（不接流量）
+  2. 网关配置灰度规则（内部白名单验证）
+  3. 逐步调大 weight（5% → 20% → 50% → 100%）
+  4. 观察错误率/延迟，异常立即回调 weight=0
+  5. 全量后删除 canary 配置，下线 v1</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">高性能设计</div>
+            <ul>
+              <li><strong>全异步 I/O</strong>：基于 Nginx（OpenResty）或 Netty / Go net/http，事件驱动非阻塞，单线程处理数万连接</li>
+              <li><strong>连接池</strong>：与上游服务维护 HTTP/2 或 gRPC 长连接池，复用连接，避免每次 TCP 握手</li>
+              <li><strong>本地缓存路由表</strong>：规则加载到内存 Trie，请求命中时零 I/O；热更新用 atomic.Value 原子替换</li>
+              <li><strong>两层限流</strong>：本地令牌桶（无网络开销，拦截大部分）+ Redis 全局计数（精确兜底）</li>
+              <li><strong>JWT 缓存</strong>：验签结果本地缓存，相同 token 复用，避免重复 RSA 运算</li>
+              <li><strong>请求合并（可选）</strong>：相同 key 的并发请求合并为一次上游调用（singleflight），减少下游压力</li>
+              <li><strong>零拷贝转发</strong>：Request/Response Body 使用 io.Pipe 流式转发，不在网关内存中缓存整个 Body</li>
+            </ul>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">可观测性</div>
+            <div class="sd-code">【每个请求注入 / 采集】
+  Trace：
+    入口生成 trace_id（若已有则透传）
+    注入 Header：X-Trace-Id / X-Span-Id
+    记录：service=gateway, upstream=svc-order, latency=12ms, status=200
+
+  Metrics（Prometheus）：
+    gateway_requests_total{method, path, status, upstream}   ← 请求计数
+    gateway_request_duration_ms{p50, p95, p99}               ← 延迟分布
+    gateway_upstream_errors_total{upstream, error_type}      ← 上游错误
+    gateway_circuit_breaker_state{upstream}                  ← 熔断状态
+
+  日志（结构化 JSON）：
+    {ts, trace_id, uid, method, path, upstream, latency, status, error}
+    高吞吐下采样（如 1% 全量 + 100% 错误日志）</div>
+          </div>
+
+          <div class="sd-section">
+            <div class="sd-section-label">高可用设计</div>
+            <ul>
+              <li><strong>无状态多实例</strong>：网关本身不存状态（路由规则从 etcd 加载），任意实例宕机不影响服务</li>
+              <li><strong>四层 LB 前置</strong>：DNS 解析到多个网关 IP，或 LVS/CLB 四层负载均衡，网关实例扩缩容对客户端透明</li>
+              <li><strong>etcd 宕机容忍</strong>：路由规则加载到内存后，etcd 宕机不影响正在处理的请求；重启时从本地文件缓存恢复</li>
+              <li><strong>上游服务发现</strong>：从 Nacos/Consul 动态获取上游实例列表，实例下线自动摘除，不影响路由</li>
+              <li><strong>超时控制</strong>：每个上游配置独立超时（connect_timeout / read_timeout），防止慢上游拖垮网关</li>
+            </ul>
+          </div>
+
+          <div class="sd-answer">核心答案：网关 = 责任链 Plugin Pipeline（限流→鉴权→路由→灰度→代理→熔断→日志）。高性能靠全异步 I/O + 本地缓存路由表 + JWT 验签缓存 + 两层限流；动态配置靠 etcd watch + atomic.Value 热更新；高可用靠无状态多实例 + 四层 LB + 本地文件兜底。熔断器三态状态机和灰度比例分流是面试常考细节。</div>
         </div>
       </div>
 
