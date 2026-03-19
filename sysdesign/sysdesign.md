@@ -421,4 +421,29 @@ Token 方案选型：
 - **事务**：取消 + 释放库存同事务，或最终一致（消息驱动）
 - **兜底**：主方案 + Cron 扫描双重保障
 
-**答案**：最优 = MQ 延迟消息（RocketMQ）+ Cron 兜底扫描。无 MQ 时用 Redis ZSET 延迟队列。Redis Key 过期监听是常见错误方案，面试必须指出其不可靠性。幂等 CAS 和 Cron 兜底是任何方案的必要补充。
+**答案**：最优 = MQ 延迟消息（RocketMQ 事务消息）+ Cron 兜底扫描。无 MQ 时用 Redis ZSET 延迟队列。Redis Key 过期监听是常见错误方案，面试必须指出其不可靠性。幂等 CAS 和 Cron 兜底是任何方案的必要补充。
+
+**补充：事务消息——下单与发延迟消息的原子性**
+
+方案⑤的隐藏问题：写 DB 成功但发消息失败，或发消息成功但写 DB 失败，都会导致超时任务丢失或幽灵任务。
+
+**RocketMQ 事务消息流程**：
+1. Producer 发送 Half 消息（对消费者不可见）→ Broker 确认
+2. 执行本地事务（INSERT order）
+3. 成功 → Commit（消息可见投递）；失败 → Rollback（丢弃）
+4. 异常（未收到 Commit/Rollback）→ Broker 主动回查 Producer → 查 DB 决定 Commit/Rollback
+
+**本地消息表（无 RocketMQ 时的兜底）**：
+```sql
+-- 同一 DB 事务
+INSERT INTO orders (...);
+INSERT INTO outbox (msg_type, payload, status) VALUES ('ORDER_TIMEOUT', orderId, 'PENDING');
+COMMIT;
+-- 后台扫描：SELECT * FROM outbox WHERE status='PENDING'，发 MQ 后更新 status='SENT'
+```
+
+| 方案 | 一致性 | 依赖 |
+|------|--------|------|
+| RocketMQ 事务消息 | 最终一致（Half+Commit+回查） | RocketMQ ≥ 4.x |
+| 本地消息表 + 扫描 | 最终一致（DB 事务保原子） | 仅需 DB + 任意 MQ |
+| Saga 补偿 | 最终一致（正向+补偿链） | 适合跨多服务长事务 |

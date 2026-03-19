@@ -3355,7 +3355,77 @@ vs. 最小堆（DelayQueue）：插入 O(log N)，时间轮在海量任务下更
             </ul>
           </div>
 
-          <div class="sd-answer">最优方案：MQ 延迟消息（RocketMQ）+ Cron 兜底。MQ 提供可靠投递、自动重试、天然分布式；Cron 作为兜底处理漏网订单。Redis ZSET 延迟队列是无 MQ 时的次优选。无论哪种方案，消费者幂等（CAS 更新状态）和 Cron 兜底扫描是必须的。</div>
+          <div class="sd-section">
+            <div class="sd-section-label">补充：事务消息——下单与发延迟消息的原子性</div>
+            <p style="font-size:13.5px;color:#374151;margin-bottom:10px">方案⑤（MQ 延迟消息）的隐藏问题：<strong>写 DB 成功但发消息失败</strong>，或<strong>发消息成功但写 DB 失败</strong>，都会导致超时任务丢失或幽灵任务。事务消息正是解决这一问题的标准方案。</p>
+
+            <div class="sd-code">【RocketMQ 事务消息流程】
+
+第一阶段：发送 Half 消息（Prepare）
+  Producer → Broker：发送半消息（对消费者不可见）
+  Broker → Producer：确认收到 Half 消息
+
+第二阶段：执行本地事务
+  Producer 执行本地 DB 操作（INSERT order）
+  成功 → 发送 Commit → Broker 投递消息给消费者（可见）
+  失败 → 发送 Rollback → Broker 丢弃 Half 消息
+
+异常补偿（本地事务结果未知）：
+  Broker 超时未收到 Commit/Rollback
+  → 主动回查 Producer（checkLocalTransaction）
+  → Producer 查 DB 订单状态：存在 → Commit，不存在 → Rollback
+
+保证：DB 写入 ↔ 消息投递，原子等价（最终一致）</div>
+
+            <div class="sd-code" style="margin-top:10px">【时序图】
+
+Producer                    Broker                   Consumer
+   |                           |                         |
+   |--- ① sendHalfMsg -------->|                         |
+   |<-- ② halfMsg ACK ---------|                         |
+   |                           |                         |
+   |--- ③ 本地事务（写 DB）     |                         |
+   |--- ④ commit/rollback ---->|                         |
+   |                           |--- ⑤ 投递消息 --------->|
+   |                           |                         |
+   |       （异常路径）          |                         |
+   |<-- ⑥ 事务回查 ------------|                         |
+   |--- ⑦ checkLocal → commit->|                         |</div>
+
+            <div class="sd-section" style="margin-top:14px">
+              <div class="sd-section-label" style="margin-bottom:6px">本地消息表（兜底方案，无 MQ 事务消息时）</div>
+              <div class="sd-code">【写入阶段（同一 DB 事务）】
+BEGIN;
+  INSERT INTO orders (...) VALUES (...);          -- 写订单
+  INSERT INTO outbox (msg_type, payload, status)  -- 写本地消息表
+         VALUES ('ORDER_TIMEOUT', '{orderId}', 'PENDING');
+COMMIT;
+
+【扫描发送（后台任务，每秒）】
+SELECT * FROM outbox WHERE status='PENDING' LIMIT 100;
+for each msg:
+    MQ.send(msg.payload)           -- 发送延迟消息
+    UPDATE outbox SET status='SENT' WHERE id=?
+
+【消费者幂等处理超时】
+  查订单状态 → PENDING → 执行取消（CAS）
+  → 已支付 → 丢弃，不处理
+
+特点：
+  • 依赖单库事务，100% 保证消息与业务数据一致
+  • 无需 MQ 支持事务消息能力，适配任意 MQ
+  • 扫描任务有延迟（秒级），需容忍</div>
+            </div>
+
+            <table class="sd-table" style="margin-top:12px">
+              <tr><th>方案</th><th>一致性保证</th><th>依赖</th><th>适用场景</th></tr>
+              <tr><td>RocketMQ 事务消息</td><td>最终一致（Half + Commit + 回查）</td><td>RocketMQ ≥ 4.x</td><td>已用 RocketMQ 的系统首选</td></tr>
+              <tr><td>本地消息表 + 扫描</td><td>最终一致（DB 事务保原子）</td><td>仅需 DB + 任意 MQ</td><td>技术栈简单或 MQ 不支持事务消息</td></tr>
+              <tr><td>Saga 补偿</td><td>最终一致（正向 + 补偿事务链）</td><td>编排框架或自实现</td><td>跨多服务长事务（取消需多步补偿）</td></tr>
+            </table>
+          </div>
+
+          <div class="sd-answer">最优方案：MQ 延迟消息（RocketMQ 事务消息）+ Cron 兜底。事务消息解决"下单写 DB 与发延迟消息"的原子性问题，是方案⑤的完整版；无 RocketMQ 时用本地消息表（outbox 表 + 扫描发送）兜底。无论哪种方案，消费者幂等（CAS 更新状态）不可省。</div>
         </div>
       </div>
 
